@@ -1,6 +1,7 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
 <meta charset="utf-8">
 <title>Index Watch — S&P 500 / Nasdaq 100 Desk</title>
+<link rel="stylesheet" href="orderflow/orderflow.css">
 <style>
   /* ============ Tokens ============ */
   :root {
@@ -649,6 +650,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18v12H3V5z"/><path d="M7 20h10M9 9l3 3-3 3M14 15h2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span class="nav-label">Trading Terminal</span>
       </button>
+      <button class="nav-item" data-view="orderflow" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h7M4 12h11M4 18h5M14 18h6M16 6h4M18 12h2" stroke-linecap="round"/></svg>
+        <span class="nav-label">Order Flow</span>
+      </button>
       <button class="nav-item" data-view="feed" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
         <span class="nav-label">Story Feed</span>
@@ -1098,6 +1103,83 @@
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- ============ ORDER FLOW (futures) ============ -->
+      <section class="view" data-view="orderflow">
+        <div id="ofRoot">
+          <div class="page-head">
+            <div>
+              <h1 class="page-title">Order Flow &mdash; Futures</h1>
+              <p class="page-dek">Depth of market, footprint, CVD, volume profile and VWAP on a live or replayed feed. Replay is simulated; Live streams from a WebSocket.</p>
+            </div>
+            <span class="of-status"><span class="of-dot" id="ofStatusDot"></span><span id="ofStatusText">Starting…</span></span>
+          </div>
+
+          <div class="card of-toolbar">
+            <div class="of-group"><span class="of-label">Feed</span>
+              <div class="of-seg"><button type="button" data-of-mode="replay">Simulated replay</button><button type="button" data-of-mode="live">Live feed</button></div>
+            </div>
+            <div class="of-group"><span class="of-label">Symbol</span><select id="ofSymbol" aria-label="Symbol"></select></div>
+            <div class="of-group"><span class="of-label">Speed</span><select id="ofSpeed" aria-label="Replay speed"></select>
+              <button type="button" class="of-btn" id="ofPause">Pause</button><button type="button" class="of-btn" id="ofRestart">Restart</button></div>
+            <div class="of-group" id="ofProviderWrap" hidden><span class="of-label">Provider</span><select id="ofProvider" aria-label="Live provider"></select></div>
+            <div class="of-group" id="ofUrlWrap" hidden><span class="of-label">Relay URL</span><input type="text" id="ofUrl" placeholder="wss://your-relay.example/stream?symbol={symbol}" aria-label="Relay WebSocket URL"></div>
+            <span class="of-spacer"></span>
+            <div class="of-group"><span class="of-status mono" id="ofRate">0 msg/s</span><span class="of-status mono" id="ofLatency">—</span></div>
+            <div class="of-group"><button type="button" class="of-btn" id="ofZoomOut" title="Show more bars">&minus; bars</button><button type="button" class="of-btn" id="ofZoomIn" title="Show fewer bars">+ bars</button>
+              <button type="button" class="of-btn" id="ofClearAnchors">Clear anchors</button></div>
+          </div>
+
+          <div class="card of-cal">
+            <div class="of-cal-next" id="ofCalNext">Loading calendar…</div>
+            <div class="of-chips" id="ofCalChips"></div>
+            <div class="of-cal-alert" id="ofCalAlert" hidden></div>
+          </div>
+
+          <div class="of-grid">
+            <div class="card of-panel">
+              <div class="of-panel-head">Depth of Market <small>walls &middot; icebergs</small></div>
+              <canvas id="ofLadder" aria-label="Depth of market price ladder"></canvas>
+            </div>
+
+            <div class="of-center">
+              <div class="card of-panel">
+                <div class="of-panel-head">Footprint &middot; VWAP &middot; Profile <small>click a bar to anchor VWAP &middot; wheel to zoom</small></div>
+                <div class="of-l1">
+                  <div>Last<span class="of-val mono" id="ofLast">—</span></div>
+                  <div>Bid<b id="ofBid">—</b></div>
+                  <div>Ask<b id="ofAsk">—</b></div>
+                  <div>Spread<b id="ofSpread">—</b></div>
+                  <div>Volume<b id="ofVol">—</b></div>
+                  <div>Session &Delta;<span class="of-val mono" id="ofDelta">—</span></div>
+                  <div>VWAP &plusmn;&sigma;<b id="ofVwap">—</b></div>
+                </div>
+                <canvas id="ofMain" aria-label="Footprint chart with VWAP, key levels and volume profile"></canvas>
+              </div>
+              <div class="card of-panel">
+                <div class="of-panel-head">Cumulative Volume Delta <small>synced to the footprint bars</small></div>
+                <canvas id="ofCvd" aria-label="Cumulative volume delta"></canvas>
+              </div>
+            </div>
+
+            <div class="of-right">
+              <div class="card of-panel">
+                <div class="of-panel-head">Session Profile
+                  <div class="of-seg"><button type="button" class="active" data-of-prof="volume">Volume</button><button type="button" data-of-prof="tpo">TPO</button></div>
+                </div>
+                <canvas id="ofProfile" aria-label="Volume profile or TPO market profile"></canvas>
+                <div class="of-stats" id="ofStats"></div>
+              </div>
+              <div class="card of-panel">
+                <div class="of-panel-head">Alerts</div>
+                <div class="of-alerts" id="ofAlerts"></div>
+              </div>
+            </div>
+          </div>
+          <p class="of-notice" id="ofNotice" role="status"></p>
+          <p class="of-help">Replay uses a seeded simulator, so prices are illustrative. Live mode needs a reachable WebSocket; futures vendors (Databento, Rithmic, Polygon) require a server-side relay that holds your API key. See the README.</p>
         </div>
       </section>
 
@@ -1587,7 +1669,7 @@
   var navItems = document.querySelectorAll(".nav-item");
   var views = document.querySelectorAll(".view");
   var breadcrumbEl = document.getElementById("breadcrumbCurrent");
-  var VIEW_LABELS = { overview: "Overview", tradedesk: "Trade Desk", terminal: "Trading Terminal", feed: "Story Feed", macro: "Macro & Benchmarks", fundamentals: "Fundamentals & Valuation", sentiment: "Sentiment Engine", technical: "Technical & Flow", map: "Event Map", symbols: "Symbols Tracked", sources: "Sources & Coverage", schedule: "Refresh Schedule" };
+  var VIEW_LABELS = { overview: "Overview", tradedesk: "Trade Desk", terminal: "Trading Terminal", orderflow: "Order Flow", feed: "Story Feed", macro: "Macro & Benchmarks", fundamentals: "Fundamentals & Valuation", sentiment: "Sentiment Engine", technical: "Technical & Flow", map: "Event Map", symbols: "Symbols Tracked", sources: "Sources & Coverage", schedule: "Refresh Schedule" };
 
   function setView(name) {
     navItems.forEach(function (n) { n.classList.toggle("active", n.getAttribute("data-view") === name); });
@@ -1704,6 +1786,12 @@
 
   function jumpToStory(id) {
     setView("feed");
+    if (!document.getElementById("story-" + id)) {
+      feedFilterState = "all";
+      document.getElementById("globalSearch").value = "";
+      document.querySelectorAll("#feedFilters .chip").forEach(function (c) { c.classList.toggle("active", c.getAttribute("data-filter") === "all"); });
+      renderFeed("all", "");
+    }
     setTimeout(function () {
       var el = document.getElementById("story-" + id);
       if (!el) return;
@@ -1905,7 +1993,7 @@
       var story = STORIES.filter(function (s) { return s.id === id; })[0];
       var act = actBtn.getAttribute("data-act");
       if (act === "open" && story) window.open(story.sources[0].url, "_blank", "noopener");
-      if (act === "copy" && story) { copyText(story.title); showToast("Headline copied"); }
+      if (act === "copy" && story) copyWithToast(story.title, "Headline copied");
       if (act === "review") showToast("Marked as reviewed");
     }
   });
@@ -1949,7 +2037,7 @@
   }
   document.getElementById("rangeToggle").addEventListener("click", function (e) {
     var btn = e.target.closest(".range-btn"); if (!btn) return;
-    document.querySelectorAll(".range-btn").forEach(function (b) { b.classList.remove("active"); });
+    this.querySelectorAll(".range-btn").forEach(function (b) { b.classList.remove("active"); });
     btn.classList.add("active");
     currentRange = btn.getAttribute("data-range");
     drawAreaChart(currentRange);
@@ -2001,38 +2089,72 @@
     e.preventDefault();
     var ticker = document.getElementById("symTicker").value.trim().toUpperCase();
     var label = document.getElementById("symLabel").value.trim();
-    if (!ticker) return;
+    if (!/^[A-Z][A-Z0-9.\-]{0,5}$/.test(ticker)) { showToast("Enter a valid ticker (letters, digits, . or -)"); return; }
     document.getElementById("revealTicker").textContent = ticker;
     revealBox.classList.add("show");
     document.getElementById("modalSubmitBtn").style.display = "none";
     var grid = document.getElementById("symbolGrid");
     var card = document.createElement("div");
     card.className = "card symbol-card";
-    card.innerHTML = '<div class="symbol-top"><span class="symbol-ticker mono">' + ticker + '</span><span class="symbol-role">Pending next refresh</span></div><p class="symbol-desc">' + (label || "Custom tracked symbol") + '</p>';
+    card.innerHTML = '<div class="symbol-top"><span class="symbol-ticker mono">' + esc(ticker) + '</span><span class="symbol-role">Pending next refresh</span></div><p class="symbol-desc">' + esc(label || "Custom tracked symbol") + '</p>';
     grid.appendChild(card);
     showToast(ticker + " added to tracking");
   });
 
+  var TOAST_MS = 2600;
+
+  /* Resolves true only if the text really reached the clipboard. */
   function copyText(text) {
-    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).catch(function () {}); }
+    if (!navigator.clipboard || !navigator.clipboard.writeText) return Promise.resolve(false);
+    return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return false; });
+  }
+  function copyWithToast(text, okMsg) {
+    return copyText(text).then(function (ok) { showToast(ok ? okMsg : "Couldn't access the clipboard in this view"); return ok; });
   }
   document.getElementById("copySummaryBtn").addEventListener("click", function () {
     var ticker = document.getElementById("revealTicker").textContent;
-    copyText(ticker + " — added to Index Watch tracking");
-    showToast("Summary copied to clipboard");
+    copyWithToast(ticker + " — added to Index Watch tracking", "Summary copied to clipboard");
   });
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
+  }
+
+  /* RFC 4180 quoting, plus a leading ' so spreadsheets don't run =,+,-,@ as formulas. */
+  function csvField(v) {
+    var s = v == null ? "" : String(v);
+    if (/^[=+\-@\t\r]/.test(s) && isNaN(Number(s))) s = "'" + s;
+    return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  function csvRow(values) { return values.map(csvField).join(","); }
+
+  /* Offers a CSV through the Artifact downloads capability; otherwise falls back to the clipboard and says which. */
+  function saveCsv(csv, filename, okMsg) {
+    function fallback(why) { copyWithToast(csv, why + " — CSV copied to clipboard instead"); }
+    if (!window.claude || typeof window.claude.use !== "function") { fallback("Downloads unavailable here"); return; }
+    var pending;
+    try { pending = window.claude.use("downloads"); } catch (e) { fallback("Downloads unavailable here"); return; }
+    Promise.resolve(pending).then(function (downloads) {
+      if (!downloads) { fallback("Downloads unavailable here"); return null; }
+      return downloads.save({ filename: filename, data: csv }).then(function () { showToast(okMsg); });
+    }).catch(function (err) {
+      if (err && err.code === "declined") { showToast("Export canceled"); return; }
+      fallback("Couldn't save the file");
+    });
+  }
 
   /* ============ Toasts ============ */
   function showToast(msg) {
     var stack = document.getElementById("toastStack");
     var t = document.createElement("div");
     t.className = "toast";
-    t.innerHTML = '<svg class="t-ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg><span>' + msg + '</span>';
+    t.innerHTML = '<svg class="t-ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg><span></span>';
+    t.lastChild.textContent = msg;
     stack.appendChild(t);
     setTimeout(function () {
       t.classList.add("leaving");
       setTimeout(function () { t.remove(); }, 240);
-    }, 2600);
+    }, TOAST_MS);
   }
 
   /* ============ Schedule toggle ============ */
@@ -2058,6 +2180,8 @@
     { t: "GOOGL", last: 201.15, chg: 0.12, pe: 24.3, rsi: 49.8, sent: -0.05 },
     { t: "AMZN", last: 228.60, chg: 0.55, pe: 36.9, rsi: 53.0, sent: 0.09 }
   ];
+
+  var WATCHLIST_TICK_MS = 2200;
 
   function heatClass(chg) { return chg > 0.05 ? "bull" : chg < -0.05 ? "bear" : "mixed"; }
 
@@ -2101,35 +2225,21 @@
   }
 
   function exportWatchlistCSV() {
-    var header = "Symbol,Last,Chg%,P/E,RSI,Sentiment\n";
-    var rows = WATCHLIST.map(function (w) {
-      return [w.t, w.last.toFixed(2), w.chg.toFixed(2), w.pe.toFixed(1), w.rsi.toFixed(1), w.sent.toFixed(2)].join(",");
-    }).join("\n");
-    var csv = header + rows;
-    if (!window.claude || typeof window.claude.use !== "function") { copyText(csv); showToast("CSV copied to clipboard"); return; }
-    window.claude.use("downloads").then(function (downloads) {
-      if (!downloads) { copyText(csv); showToast("Downloads unavailable here — CSV copied to clipboard instead"); return; }
-      downloads.save({ filename: "index-watch-watchlist.csv", data: csv }).then(function () {
-        showToast("Watchlist exported as CSV");
-      }).catch(function (err) {
-        if (err && err.code === "declined") { showToast("Export canceled"); return; }
-        copyText(csv);
-        showToast("Couldn't save the file — CSV copied to clipboard instead");
-      });
-    });
+    var lines = [csvRow(["Symbol", "Last", "Chg%", "P/E", "RSI", "Sentiment"])].concat(WATCHLIST.map(function (w) {
+      return csvRow([w.t, w.last.toFixed(2), w.chg.toFixed(2), w.pe.toFixed(1), w.rsi.toFixed(1), w.sent.toFixed(2)]);
+    }));
+    saveCsv(lines.join("\n"), "index-watch-watchlist.csv", "Watchlist exported as CSV");
   }
 
   function copyWatchlistAsPython() {
     var py = "watchlist = [\n" + WATCHLIST.map(function (w) {
       return '    {"symbol": "' + w.t + '", "last": ' + w.last.toFixed(2) + ', "chg_pct": ' + w.chg.toFixed(2) + ', "pe": ' + w.pe.toFixed(1) + ', "rsi": ' + w.rsi.toFixed(1) + ', "sentiment": ' + w.sent.toFixed(2) + "},";
     }).join("\n") + "\n]";
-    copyText(py);
-    showToast("Watchlist copied as Python list");
+    copyWithToast(py, "Watchlist copied as Python list");
   }
 
   function shareSnapshot() {
-    copyText(window.location.href);
-    showToast("Snapshot link copied");
+    copyWithToast(window.location.href, "Snapshot link copied");
   }
 
   var TERM_SERIES = {
@@ -2279,6 +2389,10 @@
     termGrid.querySelectorAll(".term-panel-head").forEach(function (head) {
       head.setAttribute("draggable", "true");
       head.addEventListener("dragstart", function (e) { dragSrc = head.closest(".term-panel"); e.dataTransfer.effectAllowed = "move"; });
+      head.addEventListener("dragend", function () {
+        dragSrc = null;
+        termGrid.querySelectorAll(".drag-over").forEach(function (p) { p.classList.remove("drag-over"); });
+      });
     });
     Array.prototype.forEach.call(termGrid.children, function (panel) {
       panel.addEventListener("dragover", function (e) { e.preventDefault(); panel.classList.add("drag-over"); });
@@ -2293,10 +2407,16 @@
     });
 
     document.addEventListener("keydown", function (e) {
-      var tag = (document.activeElement && document.activeElement.tagName) || "";
-      var typing = tag === "INPUT" || tag === "TEXTAREA";
-      if (e.key === "/" && !typing) { e.preventDefault(); cmdInput.focus(); }
-      if ((e.key === "e" || e.key === "E") && !typing) { exportWatchlistCSV(); }
+      var active = document.activeElement;
+      var tag = (active && active.tagName) || "";
+      var typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (active && active.isContentEditable);
+      var modified = e.ctrlKey || e.metaKey || e.altKey;
+      var onTerminal = document.querySelector('.view.active[data-view="terminal"]') !== null;
+      var modalOpen = document.getElementById("modalBackdrop").classList.contains("open");
+      if (!typing && !modified && !modalOpen && onTerminal) {
+        if (e.key === "/") { e.preventDefault(); cmdInput.focus(); }
+        if (e.key === "e" || e.key === "E") exportWatchlistCSV();
+      }
       if (e.key === "Escape") {
         var maxed = document.querySelector(".term-panel.maximized");
         if (maxed) maxed.classList.remove("maximized");
@@ -2307,7 +2427,12 @@
     renderWatchlist();
     drawTermChart(currentTermSymbol);
     renderNewsTerminal();
-    setInterval(function () { tickWatchlist(); renderHeatmap(); }, 2200);
+    setInterval(function () {
+      if (document.hidden) return;
+      var tradeDeskOrTerminal = document.querySelector('.view.active[data-view="terminal"], .view.active[data-view="tradedesk"]');
+      if (!tradeDeskOrTerminal) return;
+      tickWatchlist(); renderHeatmap();
+    }, WATCHLIST_TICK_MS);
   })();
 
   /* ============ Trade Desk ============ */
@@ -2400,75 +2525,96 @@
   ];
   var tradesCollection = null;
   var ACTIVITY_IS_DEMO = true;
+  var unsavedTrades = [];
+  var SIM_FEE = 1.00;
+  var BUYING_POWER = 25000;
+  var DB_LOAD_TIMEOUT_MS = 10000;
+  var TRADE_HISTORY_LIMIT = 200;
+
+  /* Turns any stored document into a safe trade row, or null when it is unusable. */
+  function normalizeTrade(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    var side = raw.side === "buy" || raw.side === "sell" ? raw.side : null;
+    var qty = Number(raw.qty), price = Number(raw.price), fee = Number(raw.fee);
+    if (!side || typeof raw.ticker !== "string" || !Number.isFinite(qty) || !Number.isFinite(price) || !Number.isFinite(fee)) return null;
+    var trade = { side: side, ticker: raw.ticker.slice(0, 12), qty: qty, price: price, fee: fee };
+    if (Number.isFinite(Number(raw.gain)) && raw.gain != null) trade.gain = Number(raw.gain);
+    if (typeof raw.ts === "string") trade.ts = raw.ts;
+    if (typeof raw.timeLabel === "string") trade.timeLabel = raw.timeLabel.slice(0, 40);
+    return trade;
+  }
+
+  function tradeTimeLabel(a) {
+    if (a.ts) { var d = new Date(a.ts); if (!isNaN(d)) return d.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); }
+    return a.timeLabel || "";
+  }
+
+  function tradeRowHtml(a) {
+    var amt = (a.qty * a.price).toFixed(2);
+    var gainHtml = a.gain != null ? '<span class="' + (a.gain >= 0 ? "gain" : "loss") + '">' + (a.gain >= 0 ? "+" : "") + "$" + Math.abs(a.gain).toFixed(2) + '</span>' : '<span style="color:var(--text-faint);">&mdash;</span>';
+    return '<div class="activity-row">' +
+      '<span class="activity-side ' + a.side + '">' + a.side.toUpperCase() + '</span>' +
+      '<div class="activity-body"><b class="mono">' + a.qty + ' ' + esc(a.ticker) + '</b> @ <span class="mono">$' + a.price.toFixed(2) + '</span>' +
+      '<div class="activity-meta">' + esc(tradeTimeLabel(a)) + ' &middot; fee $' + a.fee.toFixed(2) + '</div></div>' +
+      '<div class="activity-amt"><div class="mono">$' + amt + '</div>' + gainHtml + '</div>' +
+      '</div>';
+  }
 
   function renderActivityStream() {
     var el = document.getElementById("activityStreamList");
     if (!el) return;
-    el.innerHTML = ACTIVITY_LOG.map(function (a) {
-      var amt = (a.qty * a.price).toFixed(2);
-      var gainHtml = a.gain != null ? '<span class="' + (a.gain >= 0 ? "gain" : "loss") + '">' + (a.gain >= 0 ? "+" : "") + "$" + Math.abs(a.gain).toFixed(2) + '</span>' : '<span style="color:var(--text-faint);">&mdash;</span>';
-      return '<div class="activity-row">' +
-        '<span class="activity-side ' + a.side + '">' + a.side.toUpperCase() + '</span>' +
-        '<div class="activity-body"><b class="mono">' + a.qty + ' ' + a.ticker + '</b> @ <span class="mono">$' + a.price.toFixed(2) + '</span>' +
-        '<div class="activity-meta">' + a.timeLabel + ' &middot; fee $' + a.fee.toFixed(2) + '</div></div>' +
-        '<div class="activity-amt"><div class="mono">$' + amt + '</div>' + gainHtml + '</div>' +
-        '</div>';
-    }).join("");
+    el.innerHTML = ACTIVITY_LOG.map(tradeRowHtml).join("");
   }
 
   function exportTradesCSV() {
     if (!ACTIVITY_LOG.length) { showToast("No trades yet"); return; }
-    var header = "Side,Ticker,Qty,Price,Fee,Amount,Gain,Time\n";
-    var rows = ACTIVITY_LOG.map(function (a) {
-      var amt = (a.qty * a.price).toFixed(2);
-      return [a.side, a.ticker, a.qty, a.price.toFixed(2), a.fee.toFixed(2), amt, a.gain != null ? a.gain.toFixed(2) : "", a.timeLabel || a.ts || ""].join(",");
-    }).join("\n");
-    var csv = header + rows;
-    if (!window.claude || typeof window.claude.use !== "function") { copyText(csv); showToast("CSV copied to clipboard"); return; }
-    window.claude.use("downloads").then(function (downloads) {
-      if (!downloads) { copyText(csv); showToast("Downloads unavailable here — CSV copied to clipboard instead"); return; }
-      downloads.save({ filename: "index-watch-trade-history.csv", data: csv }).then(function () {
-        showToast("Trade history exported as CSV");
-      }).catch(function (err) {
-        if (err && err.code === "declined") { showToast("Export canceled"); return; }
-        copyText(csv);
-        showToast("Couldn't save the file — CSV copied to clipboard instead");
-      });
-    });
+    var lines = [csvRow(["Side", "Ticker", "Qty", "Price", "Fee", "Amount", "Gain", "Timestamp"])].concat(ACTIVITY_LOG.map(function (a) {
+      return csvRow([a.side, a.ticker, a.qty, a.price.toFixed(2), a.fee.toFixed(2), (a.qty * a.price).toFixed(2), a.gain != null ? a.gain.toFixed(2) : "", a.ts || a.timeLabel || ""]);
+    }));
+    saveCsv(lines.join("\n"), "index-watch-trade-history.csv", "Trade history exported as CSV");
+  }
+
+  function setTradeStatus(text) {
+    var el = document.getElementById("tradeDbStatus");
+    if (el) el.textContent = text;
+  }
+
+  /* Shows saved trades first, then any that failed to save, so nothing the user placed disappears. */
+  function applyTradeSnapshot(docs) {
+    var saved = docs.map(function (d) { return normalizeTrade(d.data()); }).filter(Boolean);
+    var skipped = docs.length - saved.length;
+    if (saved.length || unsavedTrades.length) {
+      ACTIVITY_IS_DEMO = false;
+      ACTIVITY_LOG = unsavedTrades.concat(saved);
+      renderActivityStream();
+    }
+    var base = saved.length
+      ? "Saved permanently to this artifact — " + saved.length + " trade" + (saved.length === 1 ? "" : "s") + " on record."
+      : "Connected — no trades saved yet (sample rows above are demo data).";
+    setTradeStatus(base + (skipped ? " " + skipped + " unreadable record" + (skipped === 1 ? "" : "s") + " skipped." : "") + (unsavedTrades.length ? " " + unsavedTrades.length + " not saved." : ""));
   }
 
   (function initTradeDb() {
-    var statusEl = document.getElementById("tradeDbStatus");
+    var LOCAL_ONLY = "Showing local demo data only — not saved between visits.";
     var exportBtn = document.getElementById("exportTradesBtn");
     if (exportBtn) exportBtn.addEventListener("click", exportTradesCSV);
-    if (!window.claude || typeof window.claude.use !== "function") {
-      if (statusEl) statusEl.textContent = "Showing local demo data only — not saved between visits.";
-      return;
+    if (!window.claude || typeof window.claude.use !== "function") { setTradeStatus(LOCAL_ONLY); return; }
+
+    var loadTimer = setTimeout(function () { setTradeStatus("Trade history is taking a while to load…"); }, DB_LOAD_TIMEOUT_MS);
+    function fail(err) {
+      clearTimeout(loadTimer);
+      tradesCollection = null;
+      setTradeStatus("Trade history unavailable (" + ((err && err.code) || "unknown") + ") — " + LOCAL_ONLY.toLowerCase());
     }
-    window.claude.use("db").then(function (db) {
-      if (!db) {
-        if (statusEl) statusEl.textContent = "Showing local demo data only — not saved between visits.";
-        return;
-      }
+    function connect(db) {
+      if (!db) { clearTimeout(loadTimer); setTradeStatus(LOCAL_ONLY); return; }
       tradesCollection = db.collection("trades");
-      var loadTimer = setTimeout(function () {
-        if (statusEl) statusEl.textContent = "Trade history is taking a while to load…";
-      }, 10000);
-      tradesCollection.orderBy("ts", "desc").limit(200).onSnapshot(function (snap) {
+      tradesCollection.orderBy("ts", "desc").limit(TRADE_HISTORY_LIMIT).onSnapshot(function (snap) {
         clearTimeout(loadTimer);
-        if (snap.docs.length) {
-          ACTIVITY_IS_DEMO = false;
-          ACTIVITY_LOG = snap.docs.map(function (d) { return d.data(); });
-          renderActivityStream();
-        }
-        if (statusEl) statusEl.textContent = snap.docs.length
-          ? "Saved permanently to this artifact — " + snap.docs.length + " trade" + (snap.docs.length === 1 ? "" : "s") + " on record."
-          : "Saved permanently to this artifact — no trades placed yet.";
-      }, function (err) {
-        clearTimeout(loadTimer);
-        if (statusEl) statusEl.textContent = "Trade history unavailable (" + err.code + ") — showing local demo data only.";
-      });
-    });
+        try { applyTradeSnapshot(snap.docs); } catch (e) { setTradeStatus("Trade history loaded but couldn't be displayed."); }
+      }, fail);
+    }
+    try { Promise.resolve(window.claude.use("db")).then(connect).catch(fail); } catch (e) { fail(e); }
   })();
 
   (function initQuickTrade() {
@@ -2483,16 +2629,16 @@
     var newTradeBtn = document.getElementById("newTradeBtn");
     if (!symChips || !amountInput || !slider) return;
 
-    var BUYING_POWER = 25000;
     var currentTradeSymbol = "AAPL";
 
     function lastPriceFor(t) {
       var hit = WATCHLIST.filter(function (w) { return w.t === t; })[0];
-      return hit ? hit.last : 100;
+      return hit ? hit.last : null;
     }
 
     function updateSymLabel() {
-      symLabel.textContent = "Trading " + currentTradeSymbol + " · last $" + lastPriceFor(currentTradeSymbol).toFixed(2);
+      var px = lastPriceFor(currentTradeSymbol);
+      symLabel.textContent = "Trading " + currentTradeSymbol + (px == null ? " · no price available" : " · last $" + px.toFixed(2));
     }
 
     symChips.addEventListener("click", function (e) {
@@ -2527,28 +2673,34 @@
       amountInput.value = (BUYING_POWER * (Number(slider.value) / 100)).toFixed(2);
     });
 
+    function keepLocally(record) {
+      unsavedTrades.unshift(record);
+      if (ACTIVITY_IS_DEMO) { ACTIVITY_IS_DEMO = false; ACTIVITY_LOG = []; }
+      ACTIVITY_LOG.unshift(record);
+      renderActivityStream();
+    }
+
     function placeOrder(side) {
-      var amt = parseFloat(amountInput.value);
-      if (!amt || amt <= 0) { showToast("Enter an amount first"); return; }
+      var amt = Number(amountInput.value);
+      if (!amountInput.value.trim() || !Number.isFinite(amt) || amt <= 0) { showToast("Enter a valid amount first"); return; }
+      if (amt > BUYING_POWER) { showToast("Amount exceeds the $" + BUYING_POWER.toLocaleString() + " simulated buying power"); return; }
       var price = lastPriceFor(currentTradeSymbol);
-      var qty = Math.max(1, Math.round(amt / price));
-      var label = side === "buy" ? "Simulated BUY" : "Simulated SELL";
-      if (tradesCollection) {
-        var record = { side: side, ticker: currentTradeSymbol, qty: qty, price: price, fee: 1.00, timeLabel: "Just now", ts: new Date().toISOString() };
-        tradesCollection.add(record).then(function () {
-          showToast(label + " — " + qty + " " + currentTradeSymbol + " — saved to trade history for your research data (mockup order, nothing sent to a broker)");
-        }).catch(function (err) {
-          if (ACTIVITY_IS_DEMO) ACTIVITY_LOG = [];
-          ACTIVITY_LOG.unshift({ side: side, ticker: currentTradeSymbol, qty: qty, price: price, fee: 1.00, timeLabel: "Just now" });
-          renderActivityStream();
-          showToast("Couldn't save to trade history (" + err.code + ") — kept locally only");
-        });
-      } else {
-        if (ACTIVITY_IS_DEMO) ACTIVITY_LOG = [];
-        ACTIVITY_LOG.unshift({ side: side, ticker: currentTradeSymbol, qty: qty, price: price, fee: 1.00, timeLabel: "Just now" });
-        renderActivityStream();
-        showToast(label + " — " + qty + " " + currentTradeSymbol + " — mockup only, no real order placed");
+      if (price == null) { showToast("No price available for " + currentTradeSymbol + " — order not placed"); return; }
+      var qty = Math.floor(amt / price);
+      if (qty < 1) { showToast("Amount is less than one share of " + currentTradeSymbol); return; }
+      var label = (side === "buy" ? "Simulated BUY" : "Simulated SELL") + " — " + qty + " " + currentTradeSymbol;
+      var record = { side: side, ticker: currentTradeSymbol, qty: qty, price: price, fee: SIM_FEE, ts: new Date().toISOString() };
+      if (!tradesCollection) {
+        keepLocally(record);
+        showToast(label + " — mockup only, not saved, no real order placed");
+        return;
       }
+      tradesCollection.add(record).then(function () {
+        showToast(label + " — saved to trade history (mockup order, nothing sent to a broker)");
+      }, function (err) {
+        keepLocally(record);
+        showToast("Couldn't save to trade history (" + ((err && err.code) || "unknown") + ") — kept locally only");
+      });
     }
     buyBtn.addEventListener("click", function () { placeOrder("buy"); });
     sellBtn.addEventListener("click", function () { placeOrder("sell"); });
@@ -2571,5 +2723,13 @@
   drawAreaChart("7d");
 })();
 </script>
+
+<script src="orderflow/config.js"></script>
+<script src="orderflow/analytics.js"></script>
+<script src="orderflow/calendar.js"></script>
+<script src="orderflow/engine.js"></script>
+<script src="orderflow/feeds.js"></script>
+<script src="orderflow/render.js"></script>
+<script src="orderflow/ui.js"></script>
 
 </body></html>
