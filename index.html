@@ -616,6 +616,158 @@
     .search-wrap { display: none; }
     .breadcrumb { display: none; }
   }
+
+  /* =====================================================================
+     FUTURES DESK (ES / MES / NQ / MNQ) — always high-contrast dark
+     ===================================================================== */
+  .content:has(.view.active[data-view="futures"]) { max-width: 1720px; }
+  .fx {
+    --fx-bg: #0b0d11; --fx-panel: #12151c; --fx-panel-2: #171b24; --fx-line: #232838; --fx-grid: rgba(255,255,255,0.045);
+    --fx-text: #e6e9ef; --fx-muted: #8b93a7; --fx-faint: #5d6477;
+    --fx-up: #22c55e; --fx-up-bg: rgba(34,197,94,0.13); --fx-dn: #ef4444; --fx-dn-bg: rgba(239,68,68,0.13);
+    --fx-warn: #f59e0b; --fx-warn-bg: rgba(245,158,11,0.14);
+    --fx-accent: #38bdf8;
+    --fx-mono: ui-monospace, "JetBrains Mono", "SF Mono", "Cascadia Mono", Consolas, monospace;
+    color: var(--fx-text); color-scheme: dark;
+  }
+  .fx .num, .fx .mono { font-family: var(--fx-mono); font-variant-numeric: tabular-nums; }
+  .fx .up { color: var(--fx-up); } .fx .dn { color: var(--fx-dn); } .fx .flat { color: var(--fx-muted); }
+  .fx-panel { background: var(--fx-panel); border: 1px solid var(--fx-line); border-radius: 10px; min-width: 0; }
+  .fx-ph { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px 6px; }
+  .fx-pt { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fx-muted); }
+  .fx-pb { padding: 4px 12px 12px; }
+  .fx-sub { font-size: 0.68rem; color: var(--fx-faint); }
+
+  /* head */
+  .fx-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .fx-head h1 { margin: 0; font-size: 1.3rem; letter-spacing: -0.01em; color: var(--text); }
+  .fx-head p { margin: 2px 0 0; font-size: 0.8rem; color: var(--text-muted); }
+  .fx-simctl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--fx-panel); border: 1px solid var(--fx-line); border-radius: 10px; padding: 6px 10px; }
+  .fx-clock { font-family: var(--fx-mono); font-size: 0.95rem; font-weight: 700; min-width: 88px; }
+  .fx-badge { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; }
+  .fx-badge.rth { background: var(--fx-up-bg); color: var(--fx-up); }
+  .fx-badge.eth { background: rgba(167,139,250,0.15); color: #a78bfa; }
+  .fx-badge.closed { background: rgba(139,147,167,0.15); color: var(--fx-muted); }
+
+  /* segmented controls */
+  .fx-seg { display: inline-flex; background: var(--fx-bg); border: 1px solid var(--fx-line); border-radius: 7px; padding: 2px; gap: 2px; }
+  .fx-seg button { border: 0; background: none; color: var(--fx-muted); font: 600 0.72rem var(--fx-mono); padding: 4px 9px; border-radius: 5px; cursor: pointer; }
+  .fx-seg button:hover { color: var(--fx-text); }
+  .fx-seg button.on { background: var(--fx-panel-2); color: var(--fx-text); box-shadow: inset 0 0 0 1px var(--fx-line); }
+  .fx-seg.sym button.on { background: var(--fx-accent); color: #04121c; box-shadow: none; }
+  .fx-tog { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--fx-line); background: var(--fx-bg); color: var(--fx-muted); font: 600 0.7rem var(--fx-mono); padding: 4px 8px; border-radius: 6px; cursor: pointer; }
+  .fx-tog i { width: 10px; height: 3px; border-radius: 2px; background: var(--c, #888); opacity: 0.35; }
+  .fx-tog.on { color: var(--fx-text); border-color: #39405a; }
+  .fx-tog.on i { opacity: 1; }
+  .fx select, .fx input[type=number], .fx input[type=text] {
+    background: var(--fx-bg); color: var(--fx-text); border: 1px solid var(--fx-line); border-radius: 6px;
+    font: 0.8rem var(--fx-mono); padding: 6px 8px; width: 100%; min-width: 0;
+  }
+  .fx select { width: auto; }
+  .fx input:focus, .fx select:focus { outline: none; border-color: var(--fx-accent); }
+
+  /* top macro strip */
+  .fx-strip { display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 1px; background: var(--fx-line); border: 1px solid var(--fx-line); border-radius: 10px; overflow: hidden; margin-bottom: 10px; }
+  .fx-tile { background: var(--fx-panel); padding: 8px 12px; min-width: 0; }
+  .fx-tile .k { font-size: 0.64rem; font-weight: 700; letter-spacing: 0.08em; color: var(--fx-muted); text-transform: uppercase; display: flex; justify-content: space-between; gap: 6px; }
+  .fx-tile .v { font: 700 1.05rem var(--fx-mono); margin-top: 2px; white-space: nowrap; }
+  .fx-tile .d { font: 600 0.72rem var(--fx-mono); }
+  .fx-tile .a { font-size: 0.66rem; margin-top: 3px; color: var(--fx-muted); line-height: 1.3; }
+  .fx-tile .a.alert { color: var(--fx-warn); }
+
+  /* news banner */
+  .fx-news { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 9px 14px; margin-bottom: 10px; border-radius: 10px; border: 1px solid var(--fx-line); background: var(--fx-panel); }
+  .fx-news.hot { border-color: var(--fx-dn); background: linear-gradient(90deg, rgba(239,68,68,0.16), var(--fx-panel) 60%); animation: fxpulse 1.6s ease-in-out infinite; }
+  @keyframes fxpulse { 50% { box-shadow: 0 0 0 3px rgba(239,68,68,0.18); } }
+  .fx-folder { display: inline-flex; align-items: center; gap: 6px; font: 800 0.66rem var(--fx-mono); letter-spacing: 0.08em; color: #fff; background: #b91c1c; padding: 3px 8px; border-radius: 4px; }
+  .fx-news-ev { font-weight: 700; font-size: 0.88rem; }
+  .fx-news-cd { font: 800 1.15rem var(--fx-mono); }
+  .fx-news-meta { font-size: 0.7rem; color: var(--fx-muted); }
+  .fx-hvw { display: none; font: 800 0.68rem var(--fx-mono); letter-spacing: 0.06em; color: #fff; background: var(--fx-dn); padding: 4px 9px; border-radius: 4px; }
+  .fx-news.hot .fx-hvw { display: inline-flex; }
+  .fx-news-list { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+  .fx-ev { font: 600 0.66rem var(--fx-mono); padding: 3px 7px; border-radius: 4px; background: var(--fx-bg); border: 1px solid var(--fx-line); color: var(--fx-muted); }
+  .fx-ev.done { text-decoration: line-through; opacity: 0.55; }
+
+  /* main grid */
+  .fx-grid { display: grid; grid-template-columns: 290px minmax(0,1fr) 320px; gap: 10px; align-items: start; }
+  .fx-grid.risk-collapsed { grid-template-columns: 290px minmax(0,1fr) 44px; }
+  .fx-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+  /* chart */
+  .fx-chartbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; border-bottom: 1px solid var(--fx-line); }
+  .fx-chartbar .sp { flex: 1; }
+  .fx-quote { display: flex; align-items: baseline; gap: 10px; }
+  .fx-quote .px { font: 800 1.35rem var(--fx-mono); }
+  .fx-quote .ch { font: 700 0.8rem var(--fx-mono); }
+  .fx-ovl { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 12px; border-bottom: 1px solid var(--fx-line); align-items: center; }
+  .fx-ovl .lbl { font-size: 0.62rem; font-weight: 700; color: var(--fx-faint); letter-spacing: 0.08em; margin-right: 2px; }
+  .fx-canvas-wrap { position: relative; }
+  #fxChart { display: block; width: 100%; height: 600px; cursor: crosshair; }
+  .fx-tip { position: absolute; pointer-events: none; background: rgba(11,13,17,0.95); border: 1px solid #39405a; border-radius: 6px; padding: 7px 9px; font: 0.7rem/1.45 var(--fx-mono); color: var(--fx-text); display: none; z-index: 3; white-space: nowrap; }
+  .fx-tip b { color: var(--fx-muted); font-weight: 600; }
+
+  /* rail widgets */
+  #fxRatio { display: block; width: 100%; height: 110px; }
+  .fx-kv { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; font-size: 0.74rem; }
+  .fx-kv span:nth-child(odd) { color: var(--fx-muted); }
+  .fx-kv span:nth-child(even) { font-family: var(--fx-mono); text-align: right; }
+  .fx-heat { display: flex; flex-wrap: wrap; gap: 2px; }
+  .fx-cell { flex: var(--w) 1 0; min-width: 58px; height: 58px; border-radius: 4px; padding: 5px 6px; display: flex; flex-direction: column; justify-content: space-between; color: #fff; position: relative; cursor: default; transition: background 0.4s; }
+  .fx-cell .t { font: 800 0.72rem var(--fx-mono); }
+  .fx-cell .p { font: 700 0.74rem var(--fx-mono); }
+  .fx-cell .i { font: 600 0.6rem var(--fx-mono); opacity: 0.85; }
+  .fx-heat-foot { display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.72rem; color: var(--fx-muted); }
+
+  .fx-tbl { width: 100%; border-collapse: collapse; font-size: 0.72rem; }
+  .fx-tbl th { text-align: left; color: var(--fx-faint); font-weight: 700; font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 4px; border-bottom: 1px solid var(--fx-line); }
+  .fx-tbl td { padding: 5px 4px; border-bottom: 1px solid rgba(255,255,255,0.03); font-family: var(--fx-mono); white-space: nowrap; }
+  .fx-tbl td:first-child { font-family: inherit; font-weight: 700; }
+  .fx-tbl td.r, .fx-tbl th.r { text-align: right; }
+  .fx-sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+  .fx-pill { font: 700 0.6rem var(--fx-mono); padding: 1px 6px; border-radius: 3px; }
+  .fx-pill.up { background: var(--fx-up-bg); } .fx-pill.dn { background: var(--fx-dn-bg); } .fx-pill.flat { background: rgba(139,147,167,0.12); }
+
+  /* risk panel */
+  .fx-risk { position: sticky; top: 76px; }
+  .fx-risk-toggle { border: 0; background: none; color: var(--fx-muted); cursor: pointer; padding: 4px; border-radius: 5px; display: inline-flex; }
+  .fx-risk-toggle:hover { color: var(--fx-text); background: var(--fx-panel-2); }
+  .fx-grid.risk-collapsed .fx-risk-body, .fx-grid.risk-collapsed .fx-risk .fx-pt { display: none; }
+  .fx-grid.risk-collapsed .fx-risk .fx-ph { justify-content: center; padding: 10px 4px; }
+  .fx-grid.risk-collapsed .fx-risk-toggle svg { transform: rotate(180deg); }
+  .fx-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .fx-form label { display: flex; flex-direction: column; gap: 3px; font-size: 0.64rem; font-weight: 700; color: var(--fx-muted); letter-spacing: 0.04em; text-transform: uppercase; min-width: 0; }
+  .fx-form .full { grid-column: 1 / -1; }
+  .fx-sec { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.1em; color: var(--fx-faint); text-transform: uppercase; margin: 14px 0 6px; padding-top: 10px; border-top: 1px solid var(--fx-line); }
+  .fx-spec { width: 100%; border-collapse: collapse; font: 0.7rem var(--fx-mono); }
+  .fx-spec td, .fx-spec th { padding: 3px 4px; text-align: right; }
+  .fx-spec th { color: var(--fx-faint); font-weight: 700; font-size: 0.6rem; }
+  .fx-spec td:first-child, .fx-spec th:first-child { text-align: left; }
+  .fx-spec tr.on td { color: var(--fx-accent); font-weight: 800; }
+  .fx-out { background: var(--fx-bg); border: 1px solid var(--fx-line); border-radius: 8px; padding: 10px 12px; margin-top: 10px; }
+  .fx-big { display: flex; align-items: baseline; justify-content: space-between; }
+  .fx-big .n { font: 800 2rem var(--fx-mono); line-height: 1.1; }
+  .fx-big .l { font-size: 0.66rem; color: var(--fx-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .fx-meter { height: 6px; background: var(--fx-panel-2); border-radius: 3px; overflow: hidden; margin: 8px 0 4px; }
+  .fx-meter i { display: block; height: 100%; background: var(--fx-up); transition: width 0.25s, background 0.25s; }
+  .fx-guard { font-size: 0.72rem; margin-top: 8px; padding: 7px 9px; border-radius: 6px; line-height: 1.4; }
+  .fx-guard.ok { background: var(--fx-up-bg); color: var(--fx-up); }
+  .fx-guard.bad { background: var(--fx-dn-bg); color: var(--fx-dn); }
+  .fx-guard.warn { background: var(--fx-warn-bg); color: var(--fx-warn); }
+
+  @media (max-width: 1400px) {
+    .fx-grid, .fx-grid.risk-collapsed { grid-template-columns: 270px minmax(0,1fr); }
+    .fx-risk-col { grid-column: 1 / -1; }
+    .fx-risk { position: static; }
+    .fx-strip { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  }
+  @media (max-width: 960px) {
+    .fx-grid, .fx-grid.risk-collapsed { grid-template-columns: minmax(0,1fr); }
+    .fx-chart-col { order: -1; }
+    #fxChart { height: 480px; }
+    .fx-strip { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .fx-news-list { margin-left: 0; }
+  }
 </style>
 
 <div class="glow glow-a" aria-hidden="true"></div>
@@ -638,7 +790,11 @@
     </button>
 
     <nav class="primary-nav" id="primaryNav">
-      <button class="nav-item active" data-view="overview" type="button">
+      <button class="nav-item active" data-view="futures" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3v18M17 3v18" stroke-linecap="round"/><rect x="4.5" y="7" width="5" height="8" rx="1"/><rect x="14.5" y="5" width="5" height="10" rx="1"/></svg>
+        <span class="nav-label">Futures Desk</span>
+      </button>
+      <button class="nav-item" data-view="overview" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
         <span class="nav-label">Overview</span>
       </button>
@@ -715,7 +871,7 @@
       <button class="icon-btn" id="mobileNavBtn" type="button" style="display:none;">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
-      <div class="breadcrumb">Index Watch / <b id="breadcrumbCurrent">Overview</b></div>
+      <div class="breadcrumb">Index Watch / <b id="breadcrumbCurrent">Futures Desk</b></div>
       <div class="search-wrap">
         <svg class="search-ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         <input class="search-input" id="globalSearch" type="text" placeholder="Search stories, symbols, sources…">
@@ -735,8 +891,193 @@
 
     <main class="content">
 
+      <!-- ============ FUTURES DESK (ES / MES / NQ / MNQ) ============ -->
+      <section class="view active fx" data-view="futures">
+        <div class="fx-head">
+          <div>
+            <h1>Futures Desk</h1>
+            <p>ES · MES · NQ · MNQ workstation &mdash; profile, order flow, intermarket and risk. All prices and feeds are simulated.</p>
+          </div>
+          <div class="fx-simctl" aria-label="Simulation controls">
+            <span class="fx-badge rth" id="fxSessBadge">RTH</span>
+            <span class="fx-clock" id="fxClock">--:--:--</span>
+            <span class="fx-sub">ET · SIM</span>
+            <div class="fx-seg" id="fxSpeed" role="group" aria-label="Simulation speed">
+              <button type="button" data-speed="0">❚❚</button>
+              <button type="button" data-speed="1">1×</button>
+              <button type="button" data-speed="10" class="on">10×</button>
+              <button type="button" data-speed="60">60×</button>
+            </div>
+            <select id="fxJump" aria-label="Restart simulation at">
+              <option value="565">Restart @ 09:25 (pre-open)</option>
+              <option value="645">Restart @ 10:45 (post-IB)</option>
+              <option value="818" selected>Restart @ 13:38 (pre-FOMC)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Module 2: Macro & breadth strip -->
+        <div class="fx-strip" id="fxStrip">
+          <div class="fx-tile"><div class="k"><span>ES</span><span class="fx-sub">S&amp;P 500 fut</span></div><div class="v" id="fxStripES">—</div><div class="d" id="fxStripESd">—</div></div>
+          <div class="fx-tile"><div class="k"><span>NQ</span><span class="fx-sub">Nasdaq-100 fut</span></div><div class="v" id="fxStripNQ">—</div><div class="d" id="fxStripNQd">—</div></div>
+          <div class="fx-tile"><div class="k"><span>NQ / ES</span><span class="fx-sub">ratio</span></div><div class="v" id="fxStripRatio">—</div><div class="d" id="fxStripRatiod">—</div></div>
+          <div class="fx-tile"><div class="k"><span>$TNX</span><span class="fx-sub">10Y yield</span></div><div class="v" id="fxStripTNX">—</div><div class="d" id="fxStripTNXd">—</div><div class="a" id="fxTnxAlert">—</div></div>
+          <div class="fx-tile"><div class="k"><span>VIX</span><span class="fx-sub">spot</span></div><div class="v" id="fxStripVIX">—</div><div class="d" id="fxStripVIXd">—</div></div>
+          <div class="fx-tile"><div class="k"><span>DXY</span><span class="fx-sub">dollar idx</span></div><div class="v" id="fxStripDXY">—</div><div class="d" id="fxStripDXYd">—</div></div>
+        </div>
+
+        <!-- Module 3b: High-impact news countdown -->
+        <div class="fx-news" id="fxNews" role="status" aria-live="polite">
+          <span class="fx-folder">● USD RED FOLDER</span>
+          <div>
+            <div class="fx-news-ev" id="fxNewsEv">—</div>
+            <div class="fx-news-meta" id="fxNewsMeta">—</div>
+          </div>
+          <span class="fx-news-cd" id="fxNewsCd">--:--:--</span>
+          <span class="fx-hvw">⚠ HIGH VOLATILITY WARNING</span>
+          <div class="fx-news-list" id="fxNewsList"></div>
+        </div>
+
+        <div class="fx-grid" id="fxGrid">
+          <!-- LEFT RAIL -->
+          <div class="fx-col">
+            <div class="fx-panel">
+              <div class="fx-ph"><span class="fx-pt">NQ / ES Ratio</span><span class="fx-sub mono" id="fxRatioChg">—</span></div>
+              <div class="fx-pb">
+                <canvas id="fxRatio" aria-label="NQ to ES ratio, today's session"></canvas>
+                <div class="fx-kv" style="margin-top:8px;">
+                  <span>Tech leadership</span><span id="fxLead">—</span>
+                  <span>NQ % chg</span><span id="fxNqPct">—</span>
+                  <span>ES % chg</span><span id="fxEsPct">—</span>
+                  <span>Spread (NQ−ES %)</span><span id="fxSpread">—</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="fx-panel">
+              <div class="fx-ph"><span class="fx-pt">Magnificent 7</span><span class="fx-sub">size = NDX weight</span></div>
+              <div class="fx-pb">
+                <div class="fx-heat" id="fxHeat"></div>
+                <div class="fx-heat-foot"><span>Net impact on NQ</span><span class="mono" id="fxMag7Impact">—</span></div>
+              </div>
+            </div>
+
+            <div class="fx-panel">
+              <div class="fx-ph"><span class="fx-pt">Session Levels</span><span class="fx-sub">dist. from last</span></div>
+              <div class="fx-pb"><table class="fx-tbl"><tbody id="fxLevelsTbl"></tbody></table></div>
+            </div>
+
+            <div class="fx-panel">
+              <div class="fx-ph"><span class="fx-pt">Opening Range Matrix</span></div>
+              <div class="fx-pb">
+                <table class="fx-tbl">
+                  <thead><tr><th>OR</th><th class="r">High</th><th class="r">Low</th><th class="r">Rng</th><th class="r">State</th></tr></thead>
+                  <tbody id="fxOrTbl"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- CENTER: MAIN CHART + CVD -->
+          <div class="fx-col fx-chart-col">
+            <div class="fx-panel">
+              <div class="fx-chartbar">
+                <div class="fx-seg sym" id="fxSym" role="group" aria-label="Contract">
+                  <button type="button" data-sym="ES" class="on">ES</button>
+                  <button type="button" data-sym="MES">MES</button>
+                  <button type="button" data-sym="NQ">NQ</button>
+                  <button type="button" data-sym="MNQ">MNQ</button>
+                </div>
+                <div class="fx-quote"><span class="px" id="fxLast">—</span><span class="ch" id="fxChg">—</span></div>
+                <span class="sp"></span>
+                <div class="fx-seg" id="fxTf" role="group" aria-label="Bar timeframe">
+                  <button type="button" data-tf="1">1m</button>
+                  <button type="button" data-tf="5" class="on">5m</button>
+                  <button type="button" data-tf="15">15m</button>
+                </div>
+                <div class="fx-seg" id="fxRange" role="group" aria-label="Chart range">
+                  <button type="button" data-range="rth" class="on">RTH</button>
+                  <button type="button" data-range="24h">24h</button>
+                </div>
+              </div>
+              <div class="fx-ovl" id="fxOverlays">
+                <span class="lbl">PROFILE</span>
+                <button type="button" class="fx-tog on" data-ovl="vpRth" style="--c:#38bdf8"><i></i>VP RTH</button>
+                <button type="button" class="fx-tog" data-ovl="vpEth" style="--c:#a78bfa"><i></i>VP ETH</button>
+                <button type="button" class="fx-tog on" data-ovl="ib" style="--c:#2dd4bf"><i></i>IB 1.5×/2×</button>
+                <span class="lbl" style="margin-left:6px;">LEVELS</span>
+                <button type="button" class="fx-tog on" data-ovl="pd" style="--c:#cbd5e1"><i></i>PDH/PDL/PDC</button>
+                <button type="button" class="fx-tog on" data-ovl="on" style="--c:#c4b5fd"><i></i>ONH/ONL</button>
+                <button type="button" class="fx-tog on" data-ovl="open" style="--c:#fde68a"><i></i>RTH Open</button>
+                <span class="lbl" style="margin-left:6px;">OR</span>
+                <div class="fx-seg" id="fxOr" role="group" aria-label="Opening range">
+                  <button type="button" data-or="0">Off</button>
+                  <button type="button" data-or="5">5m</button>
+                  <button type="button" data-or="15" class="on">15m</button>
+                  <button type="button" data-or="30">30m</button>
+                </div>
+                <button type="button" class="fx-tog on" data-ovl="div" style="--c:#f59e0b"><i></i>CVD Div</button>
+              </div>
+              <div class="fx-canvas-wrap">
+                <canvas id="fxChart" aria-label="Price candles with volume profile and session levels; cumulative volume delta pane below"></canvas>
+                <div class="fx-tip" id="fxTip"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: RISK / PROP FIRM -->
+          <div class="fx-col fx-risk-col">
+            <div class="fx-panel fx-risk">
+              <div class="fx-ph">
+                <span class="fx-pt">Risk &amp; Prop Guard</span>
+                <button type="button" class="fx-risk-toggle" id="fxRiskToggle" title="Collapse / expand risk panel" aria-expanded="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7" stroke-linecap="round"/></svg>
+                </button>
+              </div>
+              <div class="fx-pb fx-risk-body">
+                <table class="fx-spec">
+                  <thead><tr><th>CME</th><th>Tick</th><th>$/tick</th><th>$/pt</th></tr></thead>
+                  <tbody id="fxSpecTbl"></tbody>
+                </table>
+
+                <div class="fx-sec">Trade</div>
+                <div class="fx-form">
+                  <label>Contract
+                    <select id="rkSym"><option>ES</option><option>MES</option><option>NQ</option><option>MNQ</option></select>
+                  </label>
+                  <label>Side
+                    <select id="rkSide"><option value="1">Long</option><option value="-1">Short</option></select>
+                  </label>
+                  <label>Entry <input type="number" id="rkEntry" step="0.25"></label>
+                  <label>Stop unit
+                    <select id="rkUnit"><option value="ticks">Ticks</option><option value="points" selected>Points</option></select>
+                  </label>
+                  <label>Stop distance <input type="number" id="rkStop" value="6" min="0.25" step="0.25"></label>
+                  <label>Target R:R <input type="number" id="rkRR" value="2" min="0.1" step="0.1"></label>
+                  <label>Slippage (ticks) <input type="number" id="rkSlip" value="1" min="0" step="1"></label>
+                  <label>Comm. RT / ct ($) <input type="number" id="rkComm" value="4.50" min="0" step="0.01"></label>
+                </div>
+
+                <div class="fx-sec">Prop firm rules</div>
+                <div class="fx-form">
+                  <label>Account size ($) <input type="number" id="rkAcct" value="50000" min="0" step="1000"></label>
+                  <label>Current balance ($) <input type="number" id="rkBal" value="50850" step="50"></label>
+                  <label>Daily loss limit ($) <input type="number" id="rkDll" value="1100" min="0" step="50"></label>
+                  <label>Today's P&amp;L ($) <input type="number" id="rkPnl" value="-180" step="10"></label>
+                  <label>Trailing DD ($) <input type="number" id="rkTdd" value="2000" min="0" step="100"></label>
+                  <label>Peak balance ($) <input type="number" id="rkPeak" value="51200" step="50"></label>
+                  <label class="full">Risk per trade (% of remaining room) <input type="number" id="rkPct" value="40" min="1" max="100" step="5"></label>
+                </div>
+
+                <div class="fx-out" id="rkOut"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ============ OVERVIEW ============ -->
-      <section class="view active" data-view="overview">
+      <section class="view" data-view="overview">
         <div class="page-head">
           <div>
             <h1 class="page-title">Overview</h1>
@@ -1670,7 +2011,7 @@
   var navItems = document.querySelectorAll(".nav-item");
   var views = document.querySelectorAll(".view");
   var breadcrumbEl = document.getElementById("breadcrumbCurrent");
-  var VIEW_LABELS = { overview: "Overview", tradedesk: "Trade Desk", terminal: "Trading Terminal", orderflow: "Order Flow", feed: "Story Feed", macro: "Macro & Benchmarks", fundamentals: "Fundamentals & Valuation", sentiment: "Sentiment Engine", technical: "Technical & Flow", map: "Event Map", symbols: "Symbols Tracked", sources: "Sources & Coverage", schedule: "Refresh Schedule" };
+  var VIEW_LABELS = { futures: "Futures Desk", overview: "Overview", tradedesk: "Trade Desk", terminal: "Trading Terminal", orderflow: "Order Flow", feed: "Story Feed", macro: "Macro & Benchmarks", fundamentals: "Fundamentals & Valuation", sentiment: "Sentiment Engine", technical: "Technical & Flow", map: "Event Map", symbols: "Symbols Tracked", sources: "Sources & Coverage", schedule: "Refresh Schedule" };
 
   function setView(name) {
     navItems.forEach(function (n) { n.classList.toggle("active", n.getAttribute("data-view") === name); });
@@ -2722,6 +3063,784 @@
   renderOutlook();
   renderTable();
   drawAreaChart("7d");
+})();
+</script>
+
+<script>
+/* =====================================================================
+   FUTURES DESK — simulated ES/NQ engine + 5 analysis modules
+   1. Volume profile (RTH/ETH VAH/VAL/POC) + Initial Balance
+   2. NQ/ES ratio, $TNX correlation alerts, Mag 7 heatmap
+   3. CVD sub-pane with divergences + red-folder news countdown
+   4. CME tick engine + prop-firm drawdown guard
+   5. PDH/PDL/PDC, ONH/ONL, RTH open, Opening Range matrix
+   All data is simulated client-side; nothing is fetched or traded.
+   ===================================================================== */
+(function () {
+  "use strict";
+  var root = document.querySelector('.view[data-view="futures"]');
+  if (!root) return;
+  function $(id) { return document.getElementById(id); }
+
+  /* ---------- Contract specs (CME) ---------- */
+  var TICK = 0.25;
+  var SPEC = {
+    ES:  { base: "ES", tv: 12.50, pv: 50, comm: 4.50, name: "E-mini S&P 500" },
+    MES: { base: "ES", tv: 1.25,  pv: 5,  comm: 1.24, name: "Micro E-mini S&P 500" },
+    NQ:  { base: "NQ", tv: 5.00,  pv: 20, comm: 4.50, name: "E-mini Nasdaq-100" },
+    MNQ: { base: "NQ", tv: 0.50,  pv: 2,  comm: 1.24, name: "Micro E-mini Nasdaq-100" }
+  };
+  var VP_BIN = { ES: 0.5, NQ: 2.5 };            // profile bin size in points
+
+  /* ---------- Session clock ----------
+     t = minutes since 18:00 ET the prior evening (Globex open).
+     ETH: t < 930  |  RTH: 930 (09:30) .. 1320 (16:00)            */
+  var T_RTH_OPEN = 930, T_IB_END = 990, T_RTH_CLOSE = 1320;
+  function modOf(t) { return ((Math.floor(t) + 1080) % 1440 + 1440) % 1440; }
+  function tOfMod(mod) { return (mod - 1080 + 1440) % 1440; }
+  function hhmm(t) { var m = modOf(t); return pad(Math.floor(m / 60)) + ":" + pad(m % 60); }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+
+  var C = {
+    bg: "#0b0d11", line: "#232838", grid: "rgba(255,255,255,0.045)", axis: "#8b93a7", text: "#e6e9ef", faint: "#5d6477",
+    up: "#22c55e", dn: "#ef4444", ink: "#0b0d11",
+    vpRth: "#38bdf8", vpEth: "#a78bfa", poc: "#f59e0b", ib: "#2dd4bf", or: "#f472b6",
+    pd: "#cbd5e1", on: "#c4b5fd", open: "#fde68a", ratio: "#38bdf8"
+  };
+
+  /* ---------- Formatting ---------- */
+  var nf2 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function rt(p) { return Math.round(p / TICK) * TICK; }
+  function px(p) { return (p == null || !isFinite(p)) ? "—" : nf2.format(rt(p)); }
+  function sgn(v, d) { return (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v).toFixed(d); }
+  function cls(v) { return v > 0 ? "up" : v < 0 ? "dn" : "flat"; }
+  function kfmt(v) { var a = Math.abs(v); return (v < 0 ? "−" : "") + (a >= 1000 ? (a / 1000).toFixed(1) + "k" : String(Math.round(a))); }
+  function money(v) { return (v < 0 ? "−$" : "$") + nf2.format(Math.abs(v)); }
+
+  /* ---------- RNG ---------- */
+  var rnd = Math.random;
+  function seeded(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function gauss() { var u = 0, v = 0; while (u === 0) u = rnd(); while (v === 0) v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+
+  /* ---------- Economic calendar (raw feed → filtered to USD red folder) ---------- */
+  var RED_TYPES = ["FOMC", "CPI", "NFP", "PPI", "FED CHAIR"];
+  var CALENDAR = [
+    { day: 0, mod: 510, ccy: "USD", impact: "high", type: "PPI",  name: "Core PPI m/m",                      fc: "0.2%", prev: "0.3%" },
+    { day: 0, mod: 600, ccy: "USD", impact: "low",  type: "INV",  name: "Wholesale Inventories m/m",         fc: "0.1%", prev: "0.0%" },
+    { day: 0, mod: 600, ccy: "EUR", impact: "high", type: "ECB",  name: "ECB President Speaks",              fc: "—",    prev: "—" },
+    { day: 0, mod: 840, ccy: "USD", impact: "high", type: "FOMC", name: "FOMC Statement & Rate Decision",    fc: "Hold", prev: "Hold" },
+    { day: 0, mod: 870, ccy: "USD", impact: "high", type: "FED CHAIR", name: "Fed Chair Press Conference", fc: "—", prev: "—" },
+    { day: 3, mod: 510, ccy: "USD", impact: "high", type: "CPI",  name: "CPI y/y",                           fc: "2.9%", prev: "3.0%" },
+    { day: 4, mod: 510, ccy: "USD", impact: "high", type: "PPI",  name: "PPI m/m",                           fc: "0.2%", prev: "0.1%" },
+    { day: 7, mod: 510, ccy: "USD", impact: "high", type: "NFP",  name: "Non-Farm Payrolls",                 fc: "145K", prev: "132K" }
+  ].filter(function (e) { return e.ccy === "USD" && e.impact === "high" && RED_TYPES.indexOf(e.type) !== -1; })
+   .map(function (e) { e.t = e.day * 1440 + tOfMod(e.mod); return e; });
+
+  /* ---------- Simulation state ---------- */
+  var MAG7 = [
+    { s: "NVDA", w: 9.4, beta: 1.6 }, { s: "MSFT", w: 8.1, beta: 0.9 }, { s: "AAPL", w: 7.9, beta: 0.9 },
+    { s: "AMZN", w: 5.4, beta: 1.2 }, { s: "GOOGL", w: 5.0, beta: 1.1 }, { s: "META", w: 3.7, beta: 1.3 }, { s: "TSLA", w: 3.2, beta: 2.0 }
+  ];
+  var S = null;
+
+  // Per-minute ES volatility (points) — quiet Asia, livelier London, 08:30 data, RTH U-shape, FOMC spike.
+  function sigmaES(t) {
+    var mod = modOf(t), s;
+    if (t < T_RTH_OPEN) {
+      s = 0.32;
+      if (mod >= 180 && mod < 330) s = 0.5;
+      if (mod >= 480 && mod < 570) s = 0.55;
+      if (!S.prior && mod >= 510 && mod < 518) s = 1.7;          // 08:30 PPI
+      return s;
+    }
+    var m = t - T_RTH_OPEN;
+    s = 0.5 + 1.1 * Math.exp(-m / 35) + 0.35 * Math.exp(-(390 - m) / 30);
+    if (!S.prior && mod >= 840 && mod < 856) s *= 3.4;           // 14:00 FOMC
+    if (!S.prior && mod >= 870 && mod < 905) s *= 1.8;           // presser
+    return s;
+  }
+  function volES(t) {
+    var mod = modOf(t), v;
+    if (t < T_RTH_OPEN) { v = 140; if (mod >= 180 && mod < 330) v = 260; if (mod >= 480) v = 420; if (!S.prior && mod >= 510 && mod < 518) v = 2600; return v; }
+    var m = t - T_RTH_OPEN;
+    v = 1100 + 5200 * Math.exp(-m / 28) + 3400 * Math.exp(-(390 - m) / 22);
+    if (!S.prior && mod >= 840 && mod < 860) v *= 3.2;
+    return v;
+  }
+
+  function newBar(t, p) { return { t: t, o: p, h: p, l: p, c: p, v: 0, d: 0 }; }
+  function ensureBar(minute) {
+    var e = S.bars.ES, last = e[e.length - 1];
+    if (last && last.t === minute) return;
+    e.push(newBar(minute, S.es));
+    S.bars.NQ.push(newBar(minute, S.nq));
+    S.mHist.push({ t: minute, tnx: S.tnx, nq: S.nq });
+    if (S.mHist.length > 240) S.mHist.shift();
+  }
+  function tickBar(b, p, v, d) { b.c = p; if (p > b.h) b.h = p; if (p < b.l) b.l = p; b.v += v; b.d += d; }
+
+  function microStep(t, dt) {
+    ensureBar(Math.floor(t));
+    // regime switches (trend, tech leadership, order-flow absorption, rate correlation)
+    if (rnd() < dt / 40) S.driftES = gauss() * 0.035;
+    if (rnd() < dt / 70) S.driftLead = gauss() * 0.000006;
+    if (rnd() < dt / 25) S.flowBias = gauss() * 0.35;
+    if (rnd() < dt / 120) S.tnxBeta = rnd() < 0.25 ? 0.02 : -0.03;
+
+    var sd = sigmaES(t) * Math.sqrt(dt);
+    var z = gauss();
+    var dE = S.driftES * dt + sd * z;
+    var esPct = dE / S.es;
+    var zi = gauss();
+    var nqPct = 1.18 * esPct + S.driftLead * dt + zi * 0.15 * (sd / S.es);
+    S.es += dE;
+    S.nq *= (1 + nqPct);
+
+    // volume and aggressor delta (correlated with price, plus a drifting absorption bias → divergences)
+    var vE = volES(t) * dt * (0.6 + 0.8 * Math.abs(z));
+    var vN = vE * 0.45;
+    var aggE = Math.tanh(0.9 * z + S.flowBias + 0.45 * gauss());
+    var aggN = Math.tanh(0.9 * (z + 0.25 * zi) + S.flowBias + 0.45 * gauss());
+    var e = S.bars.ES, n = S.bars.NQ;
+    tickBar(e[e.length - 1], S.es, vE, vE * aggE * 0.45);
+    tickBar(n[n.length - 1], S.nq, vN, vN * aggN * 0.45);
+
+    // macro (inverse TNX/NQ by default; occasional positive-correlation regime)
+    var nqPctPts = nqPct * 100, ev = (!S.prior && modOf(t) >= 840 && modOf(t) < 860) ? 5 : 1;
+    var dT = S.tnxBeta * nqPctPts + 0.0007 * ev * Math.sqrt(dt) * gauss();
+    S.tnx += dT;
+    S.vix = Math.max(9.5, S.vix - 1.15 * esPct * 100 * (S.vix / 16) + 0.012 * Math.sqrt(dt) * gauss());
+    S.dxy += 3.5 * dT + 0.004 * Math.sqrt(dt) * gauss();
+    for (var i = 0; i < MAG7.length; i++) {
+      var m = S.mag[i];
+      m.pct += MAG7[i].beta * nqPctPts * (1 + m.pct / 100) + 0.03 * Math.sqrt(dt) * gauss();
+    }
+  }
+
+  function advance(dtMin) {
+    var tNow = S.simSec / 60, tEnd = Math.min(tNow + dtMin, T_RTH_CLOSE);
+    while (tNow < tEnd - 1e-9) {
+      var stepEnd = Math.min(tEnd, Math.floor(tNow) + 1, tNow + 1 / 6);
+      microStep(tNow, stepEnd - tNow);
+      tNow = stepEnd;
+    }
+    S.simSec = Math.max(S.simSec, tEnd * 60);
+  }
+
+  function initSim(startT, seed) {
+    rnd = seeded(seed);
+    S = {
+      prior: true, simSec: T_RTH_OPEN * 60, es: 6890 + gauss() * 15, nq: 25480 + gauss() * 60,
+      driftES: 0, driftLead: 0, flowBias: 0, tnxBeta: -0.03,
+      tnx: 4.18, vix: 16.2, dxy: 99.6, mag: MAG7.map(function () { return { pct: 0 }; }),
+      bars: { ES: [], NQ: [] }, mHist: []
+    };
+    // 1) prior-day RTH → PDH / PDL / PDC
+    advance(T_RTH_CLOSE - T_RTH_OPEN);
+    S.pd = {};
+    ["ES", "NQ"].forEach(function (k) {
+      var b = S.bars[k];
+      S.pd[k] = { h: Math.max.apply(null, b.map(function (x) { return x.h; })), l: Math.min.apply(null, b.map(function (x) { return x.l; })), c: b[b.length - 1].c };
+    });
+    S.ref = { tnx: S.tnx, vix: S.vix, dxy: S.dxy, ratio: S.nq / S.es };
+    S.mag.forEach(function (m) { m.pct = 0; });
+    // 2) current session from 18:00 ET Globex open
+    S.prior = false; S.bars = { ES: [], NQ: [] }; S.mHist = []; S.simSec = 0;
+    S.es += gauss() * 2; S.nq *= 1 + gauss() * 0.0004;
+    advance(startT);
+  }
+
+  /* ---------- Analytics ---------- */
+  function slice(bars, a, b) { return bars.filter(function (x) { return x.t >= a && x.t < b; }); }
+  function hiOf(b) { var h = -Infinity; for (var i = 0; i < b.length; i++) if (b[i].h > h) h = b[i].h; return h; }
+  function loOf(b) { var l = Infinity; for (var i = 0; i < b.length; i++) if (b[i].l < l) l = b[i].l; return l; }
+
+  // Volume-at-price histogram, POC, 70% value area (expand toward the larger neighbour)
+  function profile(bars, bin) {
+    if (!bars.length) return null;
+    var lo = Math.floor(loOf(bars) / bin) * bin, hi = hiOf(bars);
+    var n = Math.floor((hi - lo) / bin) + 1, vols = new Array(n).fill(0), total = 0;
+    bars.forEach(function (b) {
+      var i0 = Math.max(0, Math.floor((b.l - lo) / bin)), i1 = Math.min(n - 1, Math.floor((b.h - lo) / bin));
+      var share = b.v / (i1 - i0 + 1);
+      for (var i = i0; i <= i1; i++) vols[i] += share;
+      total += b.v;
+    });
+    var poc = 0; for (var i = 1; i < n; i++) if (vols[i] > vols[poc]) poc = i;
+    var a = poc, z = poc, acc = vols[poc];
+    while (acc < 0.7 * total && (a > 0 || z < n - 1)) {
+      var up = z < n - 1 ? vols[z + 1] : -1, dn = a > 0 ? vols[a - 1] : -1;
+      if (up >= dn) { z++; acc += up; } else { a--; acc += dn; }
+    }
+    return { lo: lo, bin: bin, vols: vols, max: vols[poc], vaLo: a, vaHi: z,
+             poc: rt(lo + (poc + 0.5) * bin), vah: rt(lo + (z + 1) * bin), val: rt(lo + a * bin) };
+  }
+
+  function computeLevels(base) {
+    var bars = S.bars[base], t = S.simSec / 60, L = { pdh: S.pd[base].h, pdl: S.pd[base].l, pdc: S.pd[base].c, or: {} };
+    var eth = slice(bars, 0, T_RTH_OPEN), rth = slice(bars, T_RTH_OPEN, T_RTH_CLOSE);
+    if (eth.length) { L.onh = hiOf(eth); L.onl = loOf(eth); }
+    if (rth.length) {
+      L.open = rth[0].o;
+      var ib = slice(rth, T_RTH_OPEN, T_IB_END);
+      L.ibh = hiOf(ib); L.ibl = loOf(ib); L.ibDone = t >= T_IB_END;
+      [5, 15, 30].forEach(function (n) {
+        var o = slice(rth, T_RTH_OPEN, T_RTH_OPEN + n);
+        L.or[n] = { h: hiOf(o), l: loOf(o), done: t >= T_RTH_OPEN + n };
+      });
+    }
+    L.vpRth = profile(rth, VP_BIN[base]);
+    L.vpEth = profile(eth, VP_BIN[base]);
+    L.last = bars.length ? bars[bars.length - 1].c : null;
+    return L;
+  }
+
+  function aggregate(bars, tf, t0, t1) {
+    var out = [], cur = null, cvd = 0;
+    for (var i = 0; i < bars.length; i++) {
+      var b = bars[i]; if (b.t < t0 || b.t >= t1) continue;
+      var k = t0 + Math.floor((b.t - t0) / tf) * tf;
+      if (!cur || cur.t !== k) { cur = { t: k, o: b.o, h: b.h, l: b.l, c: b.c, v: 0, d: 0 }; out.push(cur); }
+      if (b.h > cur.h) cur.h = b.h; if (b.l < cur.l) cur.l = b.l;
+      cur.c = b.c; cur.v += b.v; cur.d += b.d;
+    }
+    out.forEach(function (b) { cvd += b.d; b.cvd = cvd; });
+    return out;
+  }
+
+  // Swing pivots (confirmed only) and price-vs-CVD divergences between consecutive swings
+  function divergences(bars, L) {
+    var highs = [], lows = [], out = [];
+    for (var i = L; i < bars.length - L; i++) {
+      var isH = true, isL = true;
+      for (var j = i - L; j <= i + L; j++) {
+        if (j === i) continue;
+        if (bars[j].h >= bars[i].h) isH = false;
+        if (bars[j].l <= bars[i].l) isL = false;
+      }
+      if (isH) highs.push(i); if (isL) lows.push(i);
+    }
+    for (var h = 1; h < highs.length; h++) {
+      var a = bars[highs[h - 1]], b = bars[highs[h]];
+      if (b.h > a.h && b.cvd < a.cvd) out.push({ kind: "bear", a: a, b: b, pa: a.h, pb: b.h });
+    }
+    for (var l = 1; l < lows.length; l++) {
+      var c = bars[lows[l - 1]], d = bars[lows[l]];
+      if (d.l < c.l && d.cvd > c.cvd) out.push({ kind: "bull", a: c, b: d, pa: c.l, pb: d.l });
+    }
+    out.sort(function (x, y) { return x.b.t - y.b.t; });
+    return out.slice(-4);
+  }
+
+  function pearson(xs, ys) {
+    var n = xs.length; if (n < 5) return 0;
+    var mx = 0, my = 0; for (var i = 0; i < n; i++) { mx += xs[i]; my += ys[i]; } mx /= n; my /= n;
+    var sxy = 0, sx = 0, sy = 0;
+    for (i = 0; i < n; i++) { var a = xs[i] - mx, b = ys[i] - my; sxy += a * b; sx += a * a; sy += b * b; }
+    return sx && sy ? sxy / Math.sqrt(sx * sy) : 0;
+  }
+
+  /* ---------- UI state ---------- */
+  var UI = { sym: "ES", tf: 5, range: "rth", or: 15, speed: 10,
+             ovl: { vpRth: true, vpEth: false, ib: true, pd: true, on: true, open: true, div: true } };
+  var LV = null; // levels for current base instrument, refreshed every frame
+
+  /* ---------- Canvas helpers ---------- */
+  function fitCanvas(cv) {
+    var r = cv.getBoundingClientRect(); if (!r.width || !r.height) return null;
+    var dpr = window.devicePixelRatio || 1, w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    var ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx: ctx, w: r.width, h: r.height };
+  }
+  function niceStep(raw) {
+    var c = [0.25, 0.5, 1, 2, 2.5, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
+    for (var i = 0; i < c.length; i++) if (c[i] >= raw) return c[i];
+    return 1000;
+  }
+  function hline(ctx, x0, x1, y, color, dash, w) {
+    ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w || 1; ctx.setLineDash(dash || []);
+    ctx.beginPath(); ctx.moveTo(x0, Math.round(y) + 0.5); ctx.lineTo(x1, Math.round(y) + 0.5); ctx.stroke(); ctx.restore();
+  }
+
+  function activeLevels(L) {
+    var a = [], O = UI.ovl;
+    function add(on, p, label, color, dash, w, from) { if (on && p != null && isFinite(p)) a.push({ p: p, label: label, color: color, dash: dash || [], w: w || 1, from: from }); }
+    add(O.pd, L.pdh, "PDH", C.pd, [7, 4]); add(O.pd, L.pdl, "PDL", C.pd, [7, 4]); add(O.pd, L.pdc, "PDC", C.pd, [2, 3]);
+    add(O.on, L.onh, "ONH", C.on, [7, 4]); add(O.on, L.onl, "ONL", C.on, [7, 4]);
+    add(O.open, L.open, "Open", C.open, [], 1, T_RTH_OPEN);
+    if (O.ib && L.ibh != null) {
+      var r = L.ibh - L.ibl;
+      add(true, L.ibh, "IBH", C.ib, [], 1, T_RTH_OPEN); add(true, L.ibl, "IBL", C.ib, [], 1, T_RTH_OPEN);
+      add(true, L.ibh + 0.5 * r, "IB1.5▲", C.ib, [5, 4], 1, T_IB_END); add(true, L.ibl - 0.5 * r, "IB1.5▼", C.ib, [5, 4], 1, T_IB_END);
+      add(true, L.ibh + r, "IB2×▲", C.ib, [2, 4], 1, T_IB_END); add(true, L.ibl - r, "IB2×▼", C.ib, [2, 4], 1, T_IB_END);
+    }
+    var o = UI.or && L.or[UI.or];
+    if (o) { add(true, o.h, "ORH" + UI.or, C.or, [8, 3], 1, T_RTH_OPEN + UI.or); add(true, o.l, "ORL" + UI.or, C.or, [8, 3], 1, T_RTH_OPEN + UI.or); }
+    if (O.vpRth && L.vpRth) { add(true, L.vpRth.poc, "rPOC", C.poc, [], 1.5); add(true, L.vpRth.vah, "rVAH", C.vpRth, [3, 3]); add(true, L.vpRth.val, "rVAL", C.vpRth, [3, 3]); }
+    if (O.vpEth && L.vpEth) { add(true, L.vpEth.poc, "ePOC", C.poc, [6, 3]); add(true, L.vpEth.vah, "eVAH", C.vpEth, [3, 3]); add(true, L.vpEth.val, "eVAL", C.vpEth, [3, 3]); }
+    return a;
+  }
+
+  /* ---------- Main chart: price + profile + levels, CVD sub-pane ---------- */
+  var chartCv = $("fxChart"), tip = $("fxTip"), hover = null;
+
+  function drawChart() {
+    var f = fitCanvas(chartCv); if (!f) return;
+    var ctx = f.ctx, W = f.w, H = f.h, base = SPEC[UI.sym].base, tf = UI.tf;
+    var t0 = UI.range === "rth" ? T_RTH_OPEN : 0, t1 = T_RTH_CLOSE;
+    var bars = aggregate(S.bars[base], tf, t0, t1);
+    var axisW = 112, plotL = 8, plotR = W - axisW, plotW = plotR - plotL, top = 8, timeH = 22, gap = 12;
+    var mainH = Math.round((H - top - timeH - gap) * 0.73);
+    var mainTop = top, mainBot = top + mainH, cvdTop = mainBot + gap, cvdBot = H - timeH, cvdH = cvdBot - cvdTop;
+    var X = function (t) { return plotL + (t - t0) / (t1 - t0) * plotW; };
+    var slotW = plotW * tf / (t1 - t0), bw = Math.max(1, slotW * 0.66);
+
+    ctx.clearRect(0, 0, W, H); ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+    ctx.font = "11px ui-monospace, Consolas, monospace"; ctx.textBaseline = "middle";
+
+    // RTH shading in 24h mode + time grid
+    if (UI.range === "24h") { ctx.fillStyle = "rgba(56,189,248,0.035)"; ctx.fillRect(X(T_RTH_OPEN), mainTop, X(T_RTH_CLOSE) - X(T_RTH_OPEN), cvdBot - mainTop); }
+    var tStep = UI.range === "rth" ? 60 : 180;
+    ctx.fillStyle = C.axis; ctx.textAlign = "center";
+    for (var tt = t0 + (UI.range === "rth" ? 30 : 0); tt <= t1; tt += tStep) {
+      var gx = Math.round(X(tt)) + 0.5;
+      ctx.strokeStyle = C.grid; ctx.beginPath(); ctx.moveTo(gx, mainTop); ctx.lineTo(gx, cvdBot); ctx.stroke();
+      ctx.fillText(hhmm(tt), gx, H - timeH / 2);
+    }
+    ctx.strokeStyle = C.line; ctx.strokeRect(plotL + 0.5, mainTop + 0.5, plotW, mainH); ctx.strokeRect(plotL + 0.5, cvdTop + 0.5, plotW, cvdH);
+
+    if (!bars.length) {
+      ctx.fillStyle = C.axis; ctx.textAlign = "center";
+      ctx.fillText("RTH has not opened yet (" + hhmm(S.simSec / 60) + " ET) — switch to 24h to see the overnight session", plotL + plotW / 2, mainTop + mainH / 2);
+      tip.style.display = "none";
+      return;
+    }
+
+    // y-range: bars, plus active levels that are reasonably close
+    var hi = hiOf(bars), lo = loOf(bars), rng = Math.max(hi - lo, 1);
+    var levels = activeLevels(LV);
+    levels.forEach(function (l) { if (l.p <= hi + 0.6 * rng && l.p >= lo - 0.6 * rng) { hi = Math.max(hi, l.p); lo = Math.min(lo, l.p); } });
+    var padY = (hi - lo) * 0.06; hi += padY; lo -= padY;
+    var Y = function (p) { return mainTop + (hi - p) / (hi - lo) * mainH; };
+
+    // price grid
+    var pStep = niceStep((hi - lo) / 8);
+    ctx.textAlign = "left";
+    for (var gp = Math.ceil(lo / pStep) * pStep; gp <= hi; gp += pStep) {
+      var gy = Math.round(Y(gp)) + 0.5;
+      ctx.strokeStyle = C.grid; ctx.beginPath(); ctx.moveTo(plotL, gy); ctx.lineTo(plotR, gy); ctx.stroke();
+      ctx.fillStyle = C.faint; ctx.fillText(px(gp), plotR + 6, gy);
+    }
+
+    ctx.save(); ctx.beginPath(); ctx.rect(plotL, mainTop, plotW, mainH); ctx.clip();
+
+    // volume profiles (ETH anchored left, RTH anchored right)
+    function drawProfile(P, color, anchorRight) {
+      if (!P) return;
+      var maxW = plotW * 0.2;
+      for (var i = 0; i < P.vols.length; i++) {
+        var yTop = Y(P.lo + (i + 1) * P.bin), yBot = Y(P.lo + i * P.bin), h = Math.max(1, yBot - yTop - (yBot - yTop >= 3 ? 1 : 0));
+        var w = P.vols[i] / P.max * maxW, inVA = i >= P.vaLo && i <= P.vaHi;
+        ctx.globalAlpha = inVA ? 0.42 : 0.16; ctx.fillStyle = color;
+        ctx.fillRect(anchorRight ? plotR - w : plotL, yTop, w, h);
+      }
+      ctx.globalAlpha = 1;
+    }
+    if (UI.ovl.vpEth) drawProfile(LV.vpEth, C.vpEth, false);
+    if (UI.ovl.vpRth) drawProfile(LV.vpRth, C.vpRth, true);
+
+    // Initial Balance box
+    if (UI.ovl.ib && LV.ibh != null) {
+      var ibx0 = X(T_RTH_OPEN), ibx1 = X(Math.min(T_IB_END, S.simSec / 60));
+      ctx.fillStyle = "rgba(45,212,191,0.07)"; ctx.fillRect(ibx0, Y(LV.ibh), ibx1 - ibx0, Y(LV.ibl) - Y(LV.ibh));
+      ctx.fillStyle = C.ib; ctx.textAlign = "left"; ctx.fillText(LV.ibDone ? "IB" : "IB forming", ibx0 + 4, Y(LV.ibh) - 7);
+    }
+    // Opening Range box
+    var orb = UI.or && LV.or[UI.or];
+    if (orb) {
+      var ox0 = X(T_RTH_OPEN), ox1 = X(Math.min(T_RTH_OPEN + UI.or, S.simSec / 60));
+      ctx.fillStyle = "rgba(244,114,182,0.12)"; ctx.fillRect(ox0, Y(orb.h), Math.max(2, ox1 - ox0), Y(orb.l) - Y(orb.h));
+      ctx.strokeStyle = C.or; ctx.lineWidth = 1; ctx.strokeRect(ox0 + 0.5, Y(orb.h) + 0.5, Math.max(2, ox1 - ox0), Y(orb.l) - Y(orb.h));
+    }
+
+    // level lines
+    levels.forEach(function (l) { var x0 = l.from != null ? Math.max(plotL, X(l.from)) : plotL; hline(ctx, x0, plotR, Y(l.p), l.color, l.dash, l.w); });
+
+    // candles
+    bars.forEach(function (b) {
+      var cx = X(b.t + tf / 2), up = b.c >= b.o, col = up ? C.up : C.dn;
+      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(Math.round(cx) + 0.5, Y(b.h)); ctx.lineTo(Math.round(cx) + 0.5, Y(b.l)); ctx.stroke();
+      var yo = Y(b.o), yc = Y(b.c);
+      ctx.fillRect(cx - bw / 2, Math.min(yo, yc), bw, Math.max(1, Math.abs(yc - yo)));
+    });
+
+    // CVD divergences (price pane)
+    var divs = UI.ovl.div ? divergences(bars, tf === 1 ? 5 : 3) : [];
+    divs.forEach(function (d) {
+      var col = d.kind === "bear" ? C.dn : C.up, off = d.kind === "bear" ? -6 : 6;
+      ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(X(d.a.t + tf / 2), Y(d.pa) + off); ctx.lineTo(X(d.b.t + tf / 2), Y(d.pb) + off); ctx.stroke(); ctx.restore();
+      ctx.fillStyle = col; ctx.textAlign = "center"; ctx.fillText(d.kind === "bear" ? "▼ div" : "▲ div", X(d.b.t + tf / 2), Y(d.pb) + off * 2.4);
+    });
+    ctx.restore();
+
+    // ---- CVD pane (own scale; no dual axis) ----
+    var cmin = 0, cmax = 0;
+    bars.forEach(function (b) { cmin = Math.min(cmin, b.cvd); cmax = Math.max(cmax, b.cvd); });
+    var cp = (cmax - cmin) * 0.1 || 1; cmin -= cp; cmax += cp;
+    var CY = function (v) { return cvdTop + (cmax - v) / (cmax - cmin) * cvdH; };
+    ctx.save(); ctx.beginPath(); ctx.rect(plotL, cvdTop, plotW, cvdH); ctx.clip();
+    hline(ctx, plotL, plotR, CY(0), "#39405a", [3, 3]);
+    // area to zero, split by sign
+    ["pos", "neg"].forEach(function (side) {
+      ctx.save(); ctx.beginPath();
+      if (side === "pos") ctx.rect(plotL, cvdTop, plotW, CY(0) - cvdTop); else ctx.rect(plotL, CY(0), plotW, cvdBot - CY(0));
+      ctx.clip();
+      ctx.beginPath(); ctx.moveTo(X(bars[0].t + tf / 2), CY(0));
+      bars.forEach(function (b) { ctx.lineTo(X(b.t + tf / 2), CY(b.cvd)); });
+      ctx.lineTo(X(bars[bars.length - 1].t + tf / 2), CY(0)); ctx.closePath();
+      ctx.fillStyle = side === "pos" ? "rgba(34,197,94,0.14)" : "rgba(239,68,68,0.14)"; ctx.fill();
+      ctx.restore();
+    });
+    ctx.beginPath(); bars.forEach(function (b, i) { var x = X(b.t + tf / 2), y = CY(b.cvd); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
+    ctx.strokeStyle = C.text; ctx.lineWidth = 1.5; ctx.stroke();
+    divs.forEach(function (d) {
+      ctx.save(); ctx.strokeStyle = d.kind === "bear" ? C.dn : C.up; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(X(d.a.t + tf / 2), CY(d.a.cvd)); ctx.lineTo(X(d.b.t + tf / 2), CY(d.b.cvd)); ctx.stroke(); ctx.restore();
+    });
+    ctx.restore();
+    ctx.fillStyle = C.axis; ctx.textAlign = "left";
+    ctx.fillText("CVD · " + (UI.range === "rth" ? "RTH-anchored" : "session-anchored") + " · net aggressive buy − sell", plotL + 6, cvdTop + 10);
+    ctx.fillStyle = C.faint; ctx.fillText(kfmt(cmax - cp), plotR + 6, cvdTop + 8); ctx.fillText(kfmt(cmin + cp), plotR + 6, cvdBot - 8);
+
+    // ---- right-axis tags with collision nudging ----
+    var last = bars[bars.length - 1], tags = [];
+    levels.forEach(function (l) {
+      var y = Y(l.p), off = y < mainTop + 6 ? "▲" : y > mainBot - 6 ? "▼" : "";   // off-screen levels pinned to the edge with an arrow
+      tags.push({ y: Math.max(mainTop + 6, Math.min(mainBot - 6, y)), text: off + l.label + " " + px(l.p), color: l.color });
+    });
+    tags.sort(function (a, b) { return a.y - b.y; });
+    for (var k = 1; k < tags.length; k++) if (tags[k].y - tags[k - 1].y < 13) tags[k].y = tags[k - 1].y + 13;
+    for (k = tags.length - 1; k >= 0; k--) {            // push back up if the stack overflowed the pane
+      var lim = k === tags.length - 1 ? mainBot - 6 : tags[k + 1].y - 13;
+      if (tags[k].y > lim) tags[k].y = lim;
+    }
+    ctx.font = "10px ui-monospace, Consolas, monospace";
+    tags.forEach(function (tg) {
+      var y = tg.y;
+      ctx.fillStyle = tg.color; ctx.fillRect(plotR + 1, y - 6, axisW - 2, 12);
+      ctx.fillStyle = C.ink; ctx.textAlign = "left"; ctx.fillText(tg.text, plotR + 4, y);
+    });
+    // last price + CVD tags (drawn last → always on top)
+    ctx.font = "bold 11px ui-monospace, Consolas, monospace";
+    var lastCol = last.c >= LV.pdc ? C.up : C.dn, ly = Math.max(mainTop + 7, Math.min(mainBot - 7, Y(last.c)));
+    hline(ctx, plotL, plotR, Y(last.c), lastCol, [1, 2]);
+    ctx.fillStyle = lastCol; ctx.fillRect(plotR + 1, ly - 7, axisW - 2, 14); ctx.fillStyle = C.ink; ctx.fillText(px(last.c), plotR + 5, ly);
+    var cy = CY(last.cvd); ctx.fillStyle = last.cvd >= 0 ? C.up : C.dn; ctx.fillRect(plotR + 1, cy - 7, axisW - 2, 14);
+    ctx.fillStyle = C.ink; ctx.fillText(kfmt(last.cvd), plotR + 5, cy);
+
+    // ---- crosshair + tooltip (synced across both panes) ----
+    if (hover && hover.x >= plotL && hover.x <= plotR && hover.y >= mainTop && hover.y <= cvdBot) {
+      var tH = t0 + (hover.x - plotL) / plotW * (t1 - t0), hb = null;
+      for (var q = 0; q < bars.length; q++) if (tH >= bars[q].t && tH < bars[q].t + tf) { hb = bars[q]; break; }
+      var vx = hb ? Math.round(X(hb.t + tf / 2)) + 0.5 : hover.x;
+      ctx.save(); ctx.strokeStyle = "rgba(230,233,239,0.35)"; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(vx, mainTop); ctx.lineTo(vx, cvdBot); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(plotL, hover.y); ctx.lineTo(plotR, hover.y); ctx.stroke(); ctx.restore();
+      if (hover.y <= mainBot) {
+        var hp = hi - (hover.y - mainTop) / mainH * (hi - lo);
+        ctx.fillStyle = "#39405a"; ctx.fillRect(plotR + 1, hover.y - 7, axisW - 2, 14); ctx.fillStyle = C.text; ctx.fillText(px(hp), plotR + 5, hover.y);
+      }
+      if (hb) {
+        var ch = hb.c - hb.o;
+        tip.innerHTML = "<b>" + hhmm(hb.t) + " · " + tf + "m · " + base + "</b><br>" +
+          "O " + px(hb.o) + "  H " + px(hb.h) + "<br>L " + px(hb.l) + "  C " + px(hb.c) +
+          " <span class='" + cls(ch) + "'>" + sgn(ch, 2) + "</span><br>" +
+          "Vol " + kfmt(hb.v) + "  Δ <span class='" + cls(hb.d) + "'>" + kfmt(hb.d) + "</span><br>CVD " + kfmt(hb.cvd);
+        tip.style.display = "block";
+        var tx = hover.x + 14; if (tx + 190 > W) tx = hover.x - 200;
+        tip.style.left = tx + "px"; tip.style.top = Math.max(4, hover.y - 40) + "px";
+      } else tip.style.display = "none";
+    } else tip.style.display = "none";
+  }
+
+  chartCv.addEventListener("pointermove", function (e) { var r = chartCv.getBoundingClientRect(); hover = { x: e.clientX - r.left, y: e.clientY - r.top }; drawChart(); });
+  chartCv.addEventListener("pointerleave", function () { hover = null; drawChart(); });
+
+  /* ---------- NQ/ES ratio mini-chart ---------- */
+  var ratioCv = $("fxRatio"), ratioHover = null;
+  function drawRatio() {
+    var f = fitCanvas(ratioCv); if (!f) return;
+    var ctx = f.ctx, W = f.w, H = f.h, e = S.bars.ES, n = S.bars.NQ;
+    ctx.clearRect(0, 0, W, H);
+    if (e.length < 2) return;
+    var r = []; for (var i = 0; i < e.length; i += 2) r.push({ t: e[i].t, v: n[i].c / e[i].c });
+    r.push({ t: e[e.length - 1].t, v: n[n.length - 1].c / e[e.length - 1].c });
+    var base = S.ref.ratio, lo = base, hi = base;
+    r.forEach(function (p) { lo = Math.min(lo, p.v); hi = Math.max(hi, p.v); });
+    var pd = (hi - lo) * 0.12 || 0.001; lo -= pd; hi += pd;
+    var X = function (t) { return 2 + t / T_RTH_CLOSE * (W - 4); }, Y = function (v) { return 4 + (hi - v) / (hi - lo) * (H - 18); };
+    ctx.fillStyle = "rgba(56,189,248,0.035)"; ctx.fillRect(X(T_RTH_OPEN), 0, X(T_RTH_CLOSE) - X(T_RTH_OPEN), H - 14);
+    hline(ctx, 0, W, Y(base), C.faint, [3, 3]);
+    ctx.beginPath(); r.forEach(function (p, j) { if (j) ctx.lineTo(X(p.t), Y(p.v)); else ctx.moveTo(X(p.t), Y(p.v)); });
+    ctx.strokeStyle = C.ratio; ctx.lineWidth = 2; ctx.stroke();
+    ctx.font = "10px ui-monospace, Consolas, monospace"; ctx.fillStyle = C.faint; ctx.textBaseline = "middle";
+    ctx.textAlign = "left"; ctx.fillText("18:00", 2, H - 6); ctx.textAlign = "center"; ctx.fillText("09:30", X(T_RTH_OPEN), H - 6);
+    ctx.textAlign = "right"; ctx.fillText("prior close " + base.toFixed(4), W - 2, Y(base) - 7);
+    var pt = r[r.length - 1];
+    if (ratioHover != null) {
+      var tH = (ratioHover - 2) / (W - 4) * T_RTH_CLOSE, best = r[0];
+      r.forEach(function (p) { if (Math.abs(p.t - tH) < Math.abs(best.t - tH)) best = p; });
+      pt = best;
+      hline(ctx, 0, W, Y(pt.v), "rgba(230,233,239,0.25)", [2, 2]);
+      ctx.textAlign = "left"; ctx.fillStyle = C.text; ctx.fillText(hhmm(pt.t) + "  " + pt.v.toFixed(4), 4, 10);
+    }
+    ctx.beginPath(); ctx.arc(X(pt.t), Y(pt.v), 4, 0, Math.PI * 2); ctx.fillStyle = C.ratio; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = "#12151c"; ctx.stroke();
+  }
+  ratioCv.addEventListener("pointermove", function (e) { ratioHover = e.clientX - ratioCv.getBoundingClientRect().left; drawRatio(); });
+  ratioCv.addEventListener("pointerleave", function () { ratioHover = null; drawRatio(); });
+
+  /* ---------- Mag 7 heatmap ---------- */
+  var heat = $("fxHeat");
+  heat.innerHTML = MAG7.map(function (m, i) {
+    return '<div class="fx-cell" id="fxHeat' + i + '" style="--w:' + m.w + '" title="' + m.s + ' · NDX weight ' + m.w + '%"><span class="t">' + m.s + '</span><span><div class="p">—</div><div class="i">—</div></span></div>';
+  }).join("");
+  function heatColor(p) {
+    var k = Math.max(-1, Math.min(1, p / 2.5)), t = Math.abs(k), n = [58, 63, 75], c = k >= 0 ? [21, 128, 61] : [185, 28, 28];
+    return "rgb(" + n.map(function (v, i) { return Math.round(v + (c[i] - v) * t); }).join(",") + ")";
+  }
+
+  /* ---------- Per-frame DOM updates ---------- */
+  function setTxt(id, html, klass) { var el = $(id); if (!el) return; el.innerHTML = html; if (klass !== undefined) el.className = klass; }
+
+  function renderStrip() {
+    var esC = S.es - S.pd.ES.c, nqC = S.nq - S.pd.NQ.c, ratio = S.nq / S.es, rC = ratio - S.ref.ratio;
+    setTxt("fxStripES", px(S.es)); setTxt("fxStripESd", sgn(esC, 2) + " (" + sgn(esC / S.pd.ES.c * 100, 2) + "%)", "d " + cls(esC));
+    setTxt("fxStripNQ", px(S.nq)); setTxt("fxStripNQd", sgn(nqC, 2) + " (" + sgn(nqC / S.pd.NQ.c * 100, 2) + "%)", "d " + cls(nqC));
+    setTxt("fxStripRatio", ratio.toFixed(4)); setTxt("fxStripRatiod", sgn(rC / S.ref.ratio * 100, 3) + "% vs prior", "d " + cls(rC));
+    var bp = (S.tnx - S.ref.tnx) * 100;
+    setTxt("fxStripTNX", S.tnx.toFixed(3) + "%"); setTxt("fxStripTNXd", sgn(bp, 1) + " bp", "d " + cls(-bp));  // yields up = red for equities
+    var vC = S.vix - S.ref.vix; setTxt("fxStripVIX", S.vix.toFixed(2)); setTxt("fxStripVIXd", sgn(vC, 2), "d " + cls(-vC));
+    var dC = S.dxy - S.ref.dxy; setTxt("fxStripDXY", S.dxy.toFixed(2)); setTxt("fxStripDXYd", sgn(dC, 2), "d " + cls(-dC));
+
+    // TNX ↔ NQ directional correlation alert (30-minute rolling, minute changes)
+    var h = S.mHist.slice(-31), dx = [], dy = [];
+    for (var i = 1; i < h.length; i++) { dx.push(h[i].tnx - h[i - 1].tnx); dy.push(h[i].nq / h[i - 1].nq - 1); }
+    var rho = pearson(dx, dy), nqPct = nqC / S.pd.NQ.c * 100, msg, alert = false;
+    if (bp >= 5 && nqPct < 0) { msg = "⚠ Yields " + sgn(bp, 1) + "bp pressuring NQ — rate headwind"; alert = true; }
+    else if (bp >= 3 && nqPct > 0.25) { msg = "⚠ Correlation break: NQ rallying through higher yields"; alert = true; }
+    else if (rho > 0.3) { msg = "⚠ Regime shift: 30m ρ(TNX,NQ) " + sgn(rho, 2) + " (normally inverse)"; alert = true; }
+    else if (bp <= -3 && nqPct > 0) msg = "Falling yields supporting tech bid · ρ " + sgn(rho, 2);
+    else msg = "30m ρ(TNX,NQ) " + sgn(rho, 2) + (rho < -0.2 ? " · normal inverse" : " · weak");
+    setTxt("fxTnxAlert", msg, "a" + (alert ? " alert" : ""));
+  }
+
+  function renderRail() {
+    var e = S.bars.ES, n = S.bars.NQ;
+    var nqP = (S.nq / S.pd.NQ.c - 1) * 100, esP = (S.es / S.pd.ES.c - 1) * 100, spread = nqP - esP;
+    var rP = (S.nq / S.es / S.ref.ratio - 1) * 100;
+    setTxt("fxRatioChg", sgn(rP, 3) + "%", "fx-sub mono " + cls(rP));
+    setTxt("fxNqPct", sgn(nqP, 2) + "%", cls(nqP)); setTxt("fxEsPct", sgn(esP, 2) + "%", cls(esP));
+    setTxt("fxSpread", sgn(spread, 2) + "%", cls(spread));
+    setTxt("fxLead", spread > 0.15 ? "▲ NQ leading" : spread < -0.15 ? "▼ ES leading (tech lag)" : "≈ In line", cls(Math.abs(spread) > 0.15 ? spread : 0));
+    drawRatio();
+
+    // Mag 7
+    var tot = 0;
+    MAG7.forEach(function (m, i) {
+      var p = S.mag[i].pct, imp = m.w / 100 * p / 100 * S.nq; tot += imp;
+      var cell = $("fxHeat" + i); cell.style.background = heatColor(p);
+      cell.querySelector(".p").textContent = sgn(p, 2) + "%";
+      cell.querySelector(".i").textContent = sgn(imp, 1) + " pts";
+    });
+    setTxt("fxMag7Impact", sgn(tot, 1) + " pts (" + sgn(tot / S.nq * 100, 2) + "%)", "mono " + cls(tot));
+
+    // Session level ladder
+    var L = LV, last = L.last, rows = [
+      ["PDH", L.pdh, C.pd], ["PDL", L.pdl, C.pd], ["PDC", L.pdc, C.pd], ["ONH", L.onh, C.on], ["ONL", L.onl, C.on],
+      ["RTH Open", L.open, C.open], ["IBH", L.ibh, C.ib], ["IBL", L.ibl, C.ib],
+      ["rPOC", L.vpRth && L.vpRth.poc, C.poc], ["rVAH", L.vpRth && L.vpRth.vah, C.vpRth], ["rVAL", L.vpRth && L.vpRth.val, C.vpRth],
+      ["ePOC", L.vpEth && L.vpEth.poc, C.poc]
+    ].filter(function (r) { return r[1] != null && isFinite(r[1]); });
+    rows.push(["LAST", last, null]);
+    rows.sort(function (a, b) { return b[1] - a[1]; });
+    $("fxLevelsTbl").innerHTML = rows.map(function (r) {
+      if (!r[2]) return '<tr style="background:rgba(56,189,248,0.08)"><td>▶ ' + UI.sym + ' last</td><td class="r">' + px(r[1]) + '</td><td class="r"></td></tr>';
+      var d = r[1] - last;
+      return '<tr><td><span class="fx-sw" style="background:' + r[2] + '"></span>' + r[0] + '</td><td class="r">' + px(r[1]) + '</td><td class="r ' + cls(d) + '">' + sgn(d, 2) + '</td></tr>';
+    }).join("");
+
+    // Opening Range matrix
+    $("fxOrTbl").innerHTML = [5, 15, 30].map(function (k) {
+      var o = L.or[k], sel = UI.or === k ? ' style="background:rgba(244,114,182,0.08)"' : "";
+      if (!o) return "<tr" + sel + "><td>" + k + "m</td><td class='r'>—</td><td class='r'>—</td><td class='r'>—</td><td class='r'><span class='fx-pill flat'>PENDING</span></td></tr>";
+      var st = !o.done ? ["FORMING", "flat"] : last > o.h ? ["▲ ABOVE", "up"] : last < o.l ? ["▼ BELOW", "dn"] : ["INSIDE", "flat"];
+      return "<tr" + sel + "><td>" + k + "m</td><td class='r'>" + px(o.h) + "</td><td class='r'>" + px(o.l) + "</td><td class='r'>" + (o.h - o.l).toFixed(2) +
+             "</td><td class='r'><span class='fx-pill " + st[1] + "'>" + st[0] + "</span></td></tr>";
+    }).join("");
+  }
+
+  function renderHeader() {
+    var t = S.simSec / 60, sec = Math.floor((S.simSec + 1080 * 60) % 86400);
+    setTxt("fxClock", pad(Math.floor(sec / 3600)) + ":" + pad(Math.floor(sec / 60) % 60) + ":" + pad(sec % 60));
+    var b = $("fxSessBadge");
+    if (t >= T_RTH_CLOSE) { b.textContent = "CLOSED"; b.className = "fx-badge closed"; }
+    else if (t >= T_RTH_OPEN) { b.textContent = "RTH"; b.className = "fx-badge rth"; }
+    else { b.textContent = "ETH"; b.className = "fx-badge eth"; }
+    var base = SPEC[UI.sym].base, last = base === "ES" ? S.es : S.nq, chg = last - S.pd[base].c;
+    setTxt("fxLast", px(last), "px " + cls(chg));
+    setTxt("fxChg", sgn(rt(chg), 2) + "  " + sgn(chg / S.pd[base].c * 100, 2) + "%", "ch " + cls(chg));
+  }
+
+  function fmtCountdown(s) {
+    var neg = s < 0; s = Math.abs(Math.floor(s));
+    var d = Math.floor(s / 86400), h = Math.floor(s / 3600) % 24, m = Math.floor(s / 60) % 60, x = s % 60;
+    return (neg ? "+" : "") + (d ? d + "d " : "") + pad(h) + ":" + pad(m) + ":" + pad(x);
+  }
+  function renderNews() {
+    var now = S.simSec, next = null, recent = null;
+    CALENDAR.forEach(function (e) {
+      var dt = e.t * 60 - now;
+      if (dt > 0 && (!next || e.t < next.t)) next = e;
+      if (dt <= 0 && dt > -300) recent = e;                    // 5-minute post-release window
+    });
+    var ev = recent || next, box = $("fxNews");
+    if (!ev) { setTxt("fxNewsEv", "No high-impact USD events scheduled"); setTxt("fxNewsCd", "—"); box.classList.remove("hot"); }
+    else {
+      var rem = ev.t * 60 - now, hot = recent || rem <= 900;
+      box.classList.toggle("hot", !!hot);
+      setTxt("fxNewsEv", ev.name + (recent ? " — JUST RELEASED" : ""));
+      setTxt("fxNewsMeta", (ev.day ? "in " + ev.day + "d · " : "Today · ") + pad(Math.floor(ev.mod / 60)) + ":" + pad(ev.mod % 60) + " ET · " + ev.type + " · fcst " + ev.fc + " · prev " + ev.prev);
+      setTxt("fxNewsCd", recent ? "T" + fmtCountdown(-rem) : "T−" + fmtCountdown(rem), "fx-news-cd " + (hot ? "dn" : ""));
+    }
+    $("fxNewsList").innerHTML = CALENDAR.map(function (e) {
+      var done = e.t * 60 <= now;
+      return '<span class="fx-ev' + (done ? " done" : "") + '" title="' + e.name + '">' + (e.day ? "+" + e.day + "d " : "") + pad(Math.floor(e.mod / 60)) + ":" + pad(e.mod % 60) + " " + e.type + "</span>";
+    }).join("");
+  }
+
+  /* ---------- Module 4: risk & prop-firm guard ---------- */
+  $("fxSpecTbl").innerHTML = Object.keys(SPEC).map(function (k) {
+    var s = SPEC[k]; return '<tr data-k="' + k + '"><td>' + k + '</td><td>0.25</td><td>$' + s.tv.toFixed(2) + '</td><td>$' + s.pv + '</td></tr>';
+  }).join("");
+  function num(id) { var v = parseFloat($(id).value); return isFinite(v) ? v : 0; }
+
+  function renderRisk() {
+    var sym = $("rkSym").value, sp = SPEC[sym];
+    Array.prototype.forEach.call(document.querySelectorAll("#fxSpecTbl tr"), function (tr) { tr.classList.toggle("on", tr.getAttribute("data-k") === sym); });
+    var lastPx = rt(sp.base === "ES" ? S.es : S.nq), entryEl = $("rkEntry");
+    if (!entryEl.dataset.manual && document.activeElement !== entryEl) entryEl.value = lastPx.toFixed(2);
+    var entry = parseFloat(entryEl.value); if (!isFinite(entry)) entry = lastPx;
+
+    var side = +$("rkSide").value, unit = $("rkUnit").value, stopIn = Math.max(0, num("rkStop"));
+    var stopPts = rt(unit === "ticks" ? stopIn * TICK : stopIn), stopTicks = stopPts / TICK;
+    var slip = Math.max(0, num("rkSlip")), comm = Math.max(0, num("rkComm")), rr = Math.max(0, num("rkRR"));
+    var acct = num("rkAcct"), bal = num("rkBal"), dll = Math.max(0, num("rkDll")), pnl = num("rkPnl"), tdd = Math.max(0, num("rkTdd")), peak = num("rkPeak");
+    var pct = Math.min(100, Math.max(0, num("rkPct")));
+
+    var riskCt = (stopTicks + slip) * sp.tv + comm;               // worst-case loss per contract incl. slippage & fees
+    var dllRoom = Math.max(0, dll + pnl);                          // loss still allowed today
+    var hwm = Math.max(peak, bal, acct), floorBal = hwm - tdd;     // trailing liquidation threshold
+    var ddRoom = Math.max(0, bal - floorBal);
+    var room = Math.min(dllRoom, ddRoom), binding = dllRoom <= ddRoom ? "Daily loss limit" : "Trailing drawdown";
+    var maxCt = stopTicks > 0 && riskCt > 0 ? Math.floor(room / riskCt + 1e-9) : 0;
+    var recCt = stopTicks > 0 ? Math.min(maxCt, Math.floor(room * pct / 100 / riskCt + 1e-9)) : 0;
+    var stopPx = entry - side * stopPts, tgtPx = entry + side * stopPts * rr;
+    var reward = recCt * (stopPts * rr * sp.pv - comm);
+    var used = room > 0 ? recCt * riskCt / room * 100 : 0;
+
+    var micro = sym === "ES" ? "MES" : sym === "NQ" ? "MNQ" : null, microTxt = "";
+    if (micro) {
+      var mr = (stopTicks + slip) * SPEC[micro].tv + SPEC[micro].comm;
+      microTxt = "<span>Max in " + micro + "</span><span>" + (mr > 0 && stopTicks > 0 ? Math.floor(room / mr + 1e-9) : 0) + " ct</span>";
+    }
+    var guard;
+    if (stopTicks <= 0) guard = '<div class="fx-guard warn">Enter a stop distance to size the trade.</div>';
+    else if (room <= 0) guard = '<div class="fx-guard bad">⛔ No risk room left — ' + binding.toLowerCase() + ' already reached. Stop trading for the day.</div>';
+    else if (maxCt === 0) guard = '<div class="fx-guard bad">⛔ One ' + sym + ' at this stop (' + money(riskCt) + ') exceeds remaining room (' + money(room) + ').' + (micro ? " Size down to " + micro + " or tighten the stop." : " Tighten the stop.") + '</div>';
+    else if (recCt === 0) guard = '<div class="fx-guard warn">Max safe size is ' + maxCt + ' ct, but ' + pct + '% of room (' + money(room * pct / 100) + ') is below 1 contract\'s risk.</div>';
+    else guard = '<div class="fx-guard ok">✓ ' + recCt + ' ' + sym + ' stopped out costs ' + money(recCt * riskCt) + ' — leaves ' + money(room - recCt * riskCt) + ' before the ' + binding.toLowerCase() + ' is hit.</div>';
+
+    $("rkOut").innerHTML =
+      '<div class="fx-big"><div><div class="l">Max safe size</div><div class="n">' + maxCt + '<span style="font-size:0.9rem;color:var(--fx-muted)"> ct</span></div></div>' +
+      '<div style="text-align:right"><div class="l">Suggested @ ' + pct + '%</div><div class="n" style="color:var(--fx-accent)">' + recCt + '</div></div></div>' +
+      '<div class="fx-meter"><i style="width:' + Math.min(100, used).toFixed(1) + '%;background:' + (used > 75 ? "var(--fx-dn)" : used > 50 ? "var(--fx-warn)" : "var(--fx-up)") + '"></i></div>' +
+      '<div class="fx-sub" style="margin-bottom:8px;">Suggested size uses ' + used.toFixed(0) + '% of remaining risk room</div>' +
+      '<div class="fx-kv">' +
+        '<span>Stop</span><span>' + stopPts.toFixed(2) + ' pts · ' + stopTicks + ' ticks</span>' +
+        '<span>Risk / contract</span><span>' + money(riskCt) + '</span>' +
+        '<span>Stop price</span><span class="dn">' + px(stopPx) + '</span>' +
+        '<span>Target (' + rr + 'R)</span><span class="up">' + px(tgtPx) + '</span>' +
+        '<span>Risk @ suggested</span><span class="dn">' + money(-recCt * riskCt) + '</span>' +
+        '<span>Reward @ suggested</span><span class="up">' + money(reward) + '</span>' +
+        '<span>Daily-loss room</span><span>' + money(dllRoom) + '</span>' +
+        '<span>Trailing-DD room</span><span>' + money(ddRoom) + '</span>' +
+        '<span>Liquidation floor</span><span>' + money(floorBal) + '</span>' +
+        '<span>Binding rule</span><span>' + binding + '</span>' + microTxt +
+      '</div>' + guard;
+  }
+
+  ["rkSide", "rkStop", "rkRR", "rkSlip", "rkComm", "rkAcct", "rkBal", "rkDll", "rkPnl", "rkTdd", "rkPeak", "rkPct"].forEach(function (id) {
+    $(id).addEventListener("input", renderRisk);
+  });
+  $("rkEntry").addEventListener("input", function () { this.dataset.manual = this.value ? "1" : ""; renderRisk(); });
+  $("rkSym").addEventListener("change", function () { $("rkComm").value = SPEC[this.value].comm.toFixed(2); delete $("rkEntry").dataset.manual; renderRisk(); });
+  $("rkUnit").addEventListener("change", function () {
+    var v = num("rkStop"); $("rkStop").value = this.value === "ticks" ? Math.round(v / TICK) : rt(v * TICK).toFixed(2);
+    $("rkStop").step = this.value === "ticks" ? "1" : "0.25"; renderRisk();
+  });
+  $("fxRiskToggle").addEventListener("click", function () {
+    var g = $("fxGrid"), c = g.classList.toggle("risk-collapsed");
+    this.setAttribute("aria-expanded", String(!c));
+    requestAnimationFrame(renderAll);
+  });
+
+  /* ---------- Controls ---------- */
+  function segBind(id, attr, fn) {
+    $(id).addEventListener("click", function (e) {
+      var b = e.target.closest("button[" + attr + "]"); if (!b) return;
+      Array.prototype.forEach.call(this.querySelectorAll("button"), function (x) { x.classList.toggle("on", x === b); });
+      fn(b.getAttribute(attr)); renderAll();
+    });
+  }
+  segBind("fxSym", "data-sym", function (v) {
+    UI.sym = v; $("rkSym").value = v; $("rkComm").value = SPEC[v].comm.toFixed(2); delete $("rkEntry").dataset.manual;
+  });
+  segBind("fxTf", "data-tf", function (v) { UI.tf = +v; });
+  segBind("fxRange", "data-range", function (v) { UI.range = v; });
+  segBind("fxOr", "data-or", function (v) { UI.or = +v; });
+  segBind("fxSpeed", "data-speed", function (v) { UI.speed = +v; });
+  $("fxOverlays").addEventListener("click", function (e) {
+    var b = e.target.closest(".fx-tog"); if (!b) return;
+    var k = b.getAttribute("data-ovl"); UI.ovl[k] = !UI.ovl[k]; b.classList.toggle("on", UI.ovl[k]); b.setAttribute("aria-pressed", String(UI.ovl[k]));
+    renderAll();
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("#fxOverlays .fx-tog"), function (b) { b.setAttribute("aria-pressed", String(b.classList.contains("on"))); });
+  function restart() {
+    var startT = tOfMod(+$("fxJump").value);
+    initSim(startT, (Date.now() & 0x7fffffff));
+    var want = startT < T_RTH_OPEN ? "24h" : "rth";
+    if (UI.range !== want) { UI.range = want; Array.prototype.forEach.call(document.querySelectorAll("#fxRange button"), function (x) { x.classList.toggle("on", x.getAttribute("data-range") === want); }); }
+    delete $("rkEntry").dataset.manual;
+    renderAll();
+  }
+  $("fxJump").addEventListener("change", restart);
+
+  /* ---------- Loop ---------- */
+  function renderAll() {
+    LV = computeLevels(SPEC[UI.sym].base);
+    renderHeader(); renderStrip(); renderNews(); renderRail(); drawChart(); renderRisk();
+  }
+  if (window.ResizeObserver) new ResizeObserver(function () { if (S) { drawChart(); drawRatio(); } }).observe(chartCv);
+
+  restart();
+  setInterval(function () {
+    if (UI.speed > 0 && S.simSec / 60 < T_RTH_CLOSE) advance(UI.speed * 0.25 / 60);
+    if (root.classList.contains("active")) renderAll();
+  }, 250);
 })();
 </script>
 
