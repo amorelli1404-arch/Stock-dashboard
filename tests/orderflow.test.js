@@ -328,8 +328,125 @@ test("WebSocketFeed with several URLs opens only when all are open and recycles 
   delete globalThis.WebSocket;
 });
 
+test("backfill is applied before held-back live trades and duplicate ids are dropped", async () => {
+  const sockets = [];
+  globalThis.WebSocket = class { constructor() { this.readyState = 1; sockets.push(this); } send() {} close() {} };
+  let release;
+  const provider = {
+    label: "hist", url: () => "wss://x", normalize: (m) => [m],
+    backfill: () => new Promise((resolve) => { release = () => resolve([1, 2].map((id) => ({ type: "trade", price: 10, size: 1, side: "buy", ts: id, id }))); }),
+  };
+  const f = new OF.feeds.WebSocketFeed({ provider }), ids = [], notes = [];
+  f.on("trade", (t) => ids.push(t.id)).on("notice", (n) => notes.push(n));
+  f.start("ES");
+  sockets[0].onopen();
+  await new Promise((r) => setTimeout(r, 1));
+  [2, 3].forEach((id) => sockets[0].onmessage({ data: JSON.stringify({ type: "trade", price: 10, size: 1, side: "buy", ts: 9, id }) }));
+  assert.deepEqual(ids, [], "live trades are held while history loads");
+  release();
+  await new Promise((r) => setTimeout(r, 5));
+  assert.deepEqual(ids, [1, 2, 3]);
+  sockets[0].onmessage({ data: JSON.stringify({ type: "trade", price: 10, size: 1, side: "buy", ts: 9, id: 3 }) });
+  assert.deepEqual(ids, [1, 2, 3], "replayed id ignored");
+  assert.ok(notes.some((n) => /Loaded 2 historical/.test(n)));
+  f.stop();
+  delete globalThis.WebSocket;
+});
+
+test("live trades arriving before every socket is open do not turn the initial backfill into a gap-fill", async () => {
+  const sockets = [], calls = [];
+  globalThis.WebSocket = class { constructor() { this.readyState = 1; sockets.push(this); } send() {} close() {} };
+  const provider = {
+    label: "dual", url: () => ["wss://a", "wss://b"], normalize: (m) => [m],
+    backfill: (sym, opts) => { calls.push(opts.afterId); return Promise.resolve([{ type: "trade", price: 1, size: 1, side: "buy", ts: 1000, id: 5 }]); },
+  };
+  const f = new OF.feeds.WebSocketFeed({ provider }), ids = [];
+  f.on("trade", (t) => ids.push(t.id));
+  f.start("ES");
+  sockets[0].onopen();
+  sockets[0].onmessage({ data: JSON.stringify({ type: "trade", price: 1, size: 1, side: "buy", ts: 2000, id: 9 }) });
+  sockets[1].onopen();
+  await new Promise((r) => setTimeout(r, 5));
+  assert.deepEqual(calls, [null], "first backfill is a full history load, not a gap-fill");
+  assert.deepEqual(ids, [5, 9], "history first, then the live trade that arrived early");
+  f.stop();
+  delete globalThis.WebSocket;
+});
+
+test("backfill failure releases held trades and tells the user", async () => {
+  const sockets = [];
+  globalThis.WebSocket = class { constructor() { this.readyState = 1; sockets.push(this); } send() {} close() {} };
+  const provider = { label: "bad", url: () => "wss://x", normalize: (m) => [m], backfill: () => Promise.reject(new Error("HTTP 429")) };
+  const f = new OF.feeds.WebSocketFeed({ provider }), ids = [], notes = [];
+  f.on("trade", (t) => ids.push(t.id)).on("notice", (n) => notes.push(n));
+  f.start("ES");
+  sockets[0].onopen();
+  sockets[0].onmessage({ data: JSON.stringify({ type: "trade", price: 1, size: 1, side: "buy", ts: 1, id: 7 }) });
+  await new Promise((r) => setTimeout(r, 5));
+  assert.deepEqual(ids, [7]);
+  assert.ok(notes.some((n) => /unavailable.*HTTP 429/.test(n)));
+  f.stop();
+  delete globalThis.WebSocket;
+});
+
+test("Binance backfill pages back by id with no gaps or duplicates, and gap-fills after a reconnect", async () => {
+  const rows = (from, to) => { const r = []; for (let a = Math.max(0, from); a <= Math.min(to, 2499); a++) r.push({ a, p: "100", q: "1", T: 1000000 + a * 10, m: a % 2 === 0 }); return r; };
+  const calls = [];
+  globalThis.fetch = async (url) => {
+    calls.push(url);
+    const fromId = /fromId=(\d+)/.exec(url);
+    const data = fromId ? rows(Number(fromId[1]), Number(fromId[1]) + 999) : rows(1500, 2499);
+    return { ok: true, json: async () => data };
+  };
+  const bf = OF.feeds.providers.binance.backfill;
+  const hist = await bf("BTCUSDT", { afterId: null, spanMs: 1e9, maxPages: 3 });
+  const ids = hist.map((t) => t.id);
+  assert.equal(calls.length, 3);
+  assert.equal(ids.length, 2500, "all 2500 fake trades, none repeated where pages overlap");
+  assert.deepEqual(ids, ids.slice().sort((a, b) => a - b));
+  assert.equal(new Set(ids).size, ids.length);
+  assert.equal(hist[0].side, "sell", "even id has buyer-as-maker, so the aggressor sold");
+  const short = await bf("BTCUSDT", { afterId: null, spanMs: 5000, maxPages: 9 });
+  assert.equal(short.length, 1000, "stops once the requested span is covered");
+  calls.length = 0;
+  const gap = await bf("BTCUSDT", { afterId: 2100, spanMs: 0, maxPages: 5 });
+  assert.ok(/fromId=2101/.test(calls[0]));
+  assert.equal(gap[0].id, 2101);
+  delete globalThis.fetch;
+});
+
+test("databento provider supports only CME symbols and points at the local relay", () => {
+  const p = OF.feeds.providers.databento;
+  assert.ok(p.supports("ES") && p.supports("GC") && !p.supports("BTCUSDT"));
+  assert.equal(p.url("NQ", OF.config.live), "ws://127.0.0.1:8765/stream?symbol=NQ");
+  assert.deepEqual(p.normalize([{ type: "trade" }, { type: "book" }]), [{ type: "trade" }, { type: "book" }]);
+});
+
+test("WebSocketFeed forwards relay notices", () => {
+  const sockets = [];
+  globalThis.WebSocket = class { constructor() { this.readyState = 1; sockets.push(this); } send() {} close() {} };
+  const f = new OF.feeds.WebSocketFeed({ provider: { label: "n", url: () => "wss://x", normalize: OF.feeds.providers.relay.normalize } }), notes = [];
+  f.on("notice", (n) => notes.push(n));
+  f.start("ES");
+  sockets[0].onopen();
+  sockets[0].onmessage({ data: JSON.stringify([{ type: "notice", text: "MOCK relay" }]) });
+  assert.deepEqual(notes, ["MOCK relay"]);
+  f.stop();
+  delete globalThis.WebSocket;
+});
+
+test("engine buckets the same trades into different timeframes", () => {
+  const trades = [0, 1, 2, 3, 4, 5, 6].map((i) => ({ price: 6480 + i * 0.25, size: 1, side: "buy", ts: T0 + i * 60000 }));
+  const count = (ms) => { const m = OF.engine.create("ES", Object.assign({}, OF.config, { barMs: ms })); trades.forEach((t) => OF.engine.applyTrade(m, t)); return m; };
+  assert.equal(count(60000).bars.length, 7);
+  const five = count(300000);
+  assert.ok(five.bars.length <= 3);
+  assert.equal(five.bars.reduce((s, b) => s + b.vol, 0), 7, "no volume lost when re-bucketing");
+  assert.equal(count(3600000).bars.length <= 2, true);
+});
+
 test("WebSocketFeed reports an error for providers without a usable URL", () => {
-  const f = new OF.feeds.WebSocketFeed({ provider: OF.feeds.providers.databento }), seen = [];
+  const f = new OF.feeds.WebSocketFeed({ provider: OF.feeds.providers.rithmic }), seen = [];
   f.on("status", (s) => seen.push(s));
   f.start("ES");
   f.stop();

@@ -17,6 +17,39 @@ Two feed modes, toggled in the view:
 | Simulated replay | Seeded simulator (ES, NQ, CL, GC, BTCUSDT, ETHUSDT) | Deterministic per seed, speed 1x to 60x, pause and restart. Prices are illustrative. |
 | Live feed | WebSocket provider | `binance` works out of the box (BTCUSDT, ETHUSDT). Everything else goes through a relay. |
 
+### Timeframes
+
+The Timeframe selector (1m, 5m, 15m, 1h, 4h) re-buckets the footprint, CVD, VWAP, profile and TPO. Bars are built from trades, so history depends on the feed:
+
+- **Replay:** warm-up is capped at 2 hours of simulated time, so 1h and 4h show only a few bars.
+- **Binance:** on connect (and after a reconnect, to fill the gap) recent trades are loaded from the REST API before the live stream is applied. That is about 24 seconds of BTC trades per request, `live.backfillPages` (default 25) requests, so roughly 10 minutes of history. Higher timeframes fill in as time passes.
+- **Databento:** bars start when the relay connects; no trade history is loaded.
+
+### Free live futures (Binance, no key, no relay)
+
+Live feed + Provider "Binance Futures" streams real tick-by-tick trades and 20-level depth for perpetual futures, with trade history loaded on connect:
+
+| Symbol | Tracks |
+|---|---|
+| XAUUSDT, XAGUSDT | Gold, silver |
+| CLUSDT, BZUSDT | WTI crude, Brent |
+| SPYUSDT, QQQUSDT | S&P 500 and Nasdaq-100 (via the SPY / QQQ ETFs) |
+| NVDAUSDT, TSLAUSDT | single stocks |
+| BTCUSDT, ETHUSDT | crypto |
+
+These are Binance USDT-margined perpetuals that track the underlying. They are real, live, free order flow, but they are **not CME contracts**: prices and volume differ from ES/NQ/CL/GC, and volume is Binance's own. Alert thresholds (`wallMin`, `iceMin`, `imbMin`) were calibrated from observed book sizes and can be tuned per symbol in `orderflow/config.js`. Equity-linked perps may trade thinly or pause outside US market hours. Real CME contracts need a licensed vendor (see below).
+
+### Live CME futures (Databento)
+
+1. `pip install -r relay/requirements.txt`
+2. Copy `relay/.env.example` to `relay/.env` and set `DATABENTO_API_KEY` (needs a Databento account with CME Globex MDP 3.0 live data).
+3. `python relay/databento_relay.py` (or `--mock` for synthetic data without a key).
+4. In the view: Live feed, Provider "Databento (CME, local relay)", symbol ES / NQ / CL / GC.
+
+The relay subscribes to MBP-10 (trades plus 10 levels of depth) on continuous front-month symbols, derives PDH/PDL/PDC, overnight high/low and weekly open from historical 1-minute bars, and binds to `127.0.0.1`. Only pages served from localhost (plus origins in `ALLOWED_ORIGINS`) may connect, so other websites cannot read your licensed data. Trade side comes from Databento's aggressor flag.
+
+Status: the relay's Databento code follows Databento's documented Python API but has not been run against a live account. The `--mock` mode and the dashboard connection are tested.
+
 ### Files
 
 ```

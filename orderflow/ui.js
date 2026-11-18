@@ -13,7 +13,7 @@
 
   var MIN_REDRAW_MS = 100, NOTICE_MS = 9000, RATE_WINDOW_MS = 1000;
   var app = {
-    mode: cfg.defaultMode, symbol: cfg.defaultSymbol, speed: cfg.replay.speed, paused: false,
+    mode: cfg.defaultMode, symbol: cfg.defaultSymbol, speed: cfg.replay.speed, paused: false, tf: cfg.timeframes[0].ms,
     market: null, feed: null, view: null, drawnRev: -1, dirty: true, lastDraw: 0,
     msgs: 0, lastMsgs: 0, rate: 0, latency: null, errors: 0, noticeTimer: null, lastAlertKey: "", lastStatsRev: -1,
     ctl: { visibleBars: cfg.visibleBars, hoverX: null, hoverY: null, hoverCanvas: null, profileMode: "volume", tpoPeriod: cfg.replay.tpoPeriodBars }
@@ -55,24 +55,24 @@
 
   function start() {
     stopFeed();
-    app.market = E.create(app.symbol, cfg);
+    var mcfg = Object.assign({}, cfg, { barMs: app.tf });
+    app.market = E.create(app.symbol, mcfg);
     app.latency = null;
     app.view = null;
     app.dirty = true;
-    var feed;
-    if (app.mode === "replay") {
-      app.ctl.tpoPeriod = cfg.replay.tpoPeriodBars;
-      feed = new OF.feeds.SimulatedFeed({ config: cfg, speed: app.speed, seed: cfg.replay.seed });
+    var feed, replay = app.mode === "replay";
+    app.ctl.tpoPeriod = Math.max(1, Math.round((replay ? cfg.replay.tpoPeriodBars * cfg.timeframes[0].ms : cfg.tpoPeriodMs) / app.tf));
+    if (replay) {
+      feed = new OF.feeds.SimulatedFeed({ config: mcfg, speed: app.speed, seed: cfg.replay.seed });
       feed.setPaused(app.paused);
     } else {
       var provider = OF.feeds.providers[cfg.live.provider];
-      app.ctl.tpoPeriod = cfg.live.tpoPeriodBars;
       if (!provider || !provider.supports(app.symbol)) {
         setStatus("error", provider && provider.unsupported ? provider.unsupported : "No " + (provider ? provider.label : cfg.live.provider) + " feed for " + app.symbol);
         notice("Pick a supported symbol (e.g. BTCUSDT) or configure a relay provider to stream " + app.symbol + ".");
         return;
       }
-      feed = new OF.feeds.WebSocketFeed({ config: cfg, provider: provider });
+      feed = new OF.feeds.WebSocketFeed({ config: mcfg, provider: provider });
     }
     wire(feed, app.market);
     app.feed = feed;
@@ -92,9 +92,9 @@
 
   /* ---------- Controls ---------- */
   function buildControls() {
-    var sel = $("ofSymbol");
-    Object.keys(cfg.symbols).forEach(function (k) { var o = el("option", "", k + " — " + cfg.symbols[k].name); o.value = k; sel.appendChild(o); });
-    sel.value = app.symbol;
+    var tf = $("ofTf");
+    cfg.timeframes.forEach(function (t) { var o = el("option", "", t.label); o.value = t.ms; tf.appendChild(o); });
+    tf.value = app.tf;
     var spd = $("ofSpeed");
     cfg.replay.speeds.forEach(function (s) { var o = el("option", "", s + "x"); o.value = s; spd.appendChild(o); });
     spd.value = app.speed;
@@ -104,15 +104,27 @@
     $("ofUrl").value = cfg.live.url;
   }
 
+  /* Live providers only offer the symbols they can stream; replay offers everything. */
+  function refreshSymbols() {
+    var sel = $("ofSymbol"), provider = OF.feeds.providers[cfg.live.provider];
+    var keys = Object.keys(cfg.symbols).filter(function (k) { return app.mode === "replay" || (provider && provider.supports(k)); });
+    if (!keys.length) keys = Object.keys(cfg.symbols);
+    if (keys.indexOf(app.symbol) < 0) app.symbol = keys[0];
+    sel.textContent = "";
+    keys.forEach(function (k) { var o = el("option", "", k + " — " + cfg.symbols[k].name); o.value = k; sel.appendChild(o); });
+    sel.value = app.symbol;
+  }
+
   function bindControls() {
     document.querySelectorAll("[data-of-mode]").forEach(function (b) {
-      b.addEventListener("click", function () { app.mode = b.getAttribute("data-of-mode"); start(); syncControls(); });
+      b.addEventListener("click", function () { app.mode = b.getAttribute("data-of-mode"); refreshSymbols(); start(); syncControls(); });
     });
+    $("ofTf").addEventListener("change", function (e) { app.tf = Number(e.target.value); start(); });
     $("ofSymbol").addEventListener("change", function (e) { app.symbol = e.target.value; start(); });
     $("ofSpeed").addEventListener("change", function (e) { app.speed = Number(e.target.value); if (app.feed && app.feed.setSpeed) app.feed.setSpeed(app.speed); });
     $("ofPause").addEventListener("click", function () { app.paused = !app.paused; if (app.feed && app.feed.setPaused) app.feed.setPaused(app.paused); syncControls(); });
     $("ofRestart").addEventListener("click", function () { start(); });
-    $("ofProvider").addEventListener("change", function (e) { cfg.live.provider = e.target.value; syncControls(); start(); });
+    $("ofProvider").addEventListener("change", function (e) { cfg.live.provider = e.target.value; refreshSymbols(); syncControls(); start(); });
     $("ofUrl").addEventListener("change", function (e) {
       var v = e.target.value.trim();
       if (v && !/^wss?:\/\//i.test(v)) { notice("Relay URL must start with ws:// or wss://"); return; }
@@ -277,6 +289,7 @@
   function init() {
     readParams();
     buildControls();
+    refreshSymbols();
     bindControls();
     bindCanvas();
     syncControls();

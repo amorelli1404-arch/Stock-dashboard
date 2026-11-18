@@ -56,7 +56,7 @@
     for (var k = 0; k < BOOK_DEPTH; k++) { this.bidSizes.push(this.levelSize()); this.askSizes.push(this.levelSize()); }
 
     this.emit("levels", this.buildLevels(baseTick));
-    var warmupMs = this.cfg.replay.warmupBars * this.cfg.barMs;
+    var warmupMs = Math.min(this.cfg.replay.warmupBars * this.cfg.barMs, this.cfg.replay.maxWarmupMs);
     this.simNow = Math.floor(Date.now() / this.cfg.barMs) * this.cfg.barMs - warmupMs;
     var end = this.simNow + warmupMs;
     while (this.simNow < end) this.step();
@@ -226,6 +226,8 @@
     this.stopped = true;
     this.sockets = [];
     this.cycle = 0;
+    this.lastId = null;
+    this.buffer = null;
     this.reconnectTimer = null;
     this.watchdog = null;
     this.lastMsg = 0;
@@ -237,6 +239,7 @@
     this.symKey = symbolKey;
     this.stopped = false;
     this.retry = 0;
+    this.lastId = null;
     var self = this;
     this.watchdog = setInterval(function () {
       var live = self.sockets.length && self.sockets.every(function (s) { return s.readyState === 1; });
@@ -259,6 +262,7 @@
   WebSocketFeed.prototype.stop = function () {
     this.stopped = true;
     this.cycle++;
+    this.buffer = null;
     clearTimeout(this.reconnectTimer);
     clearInterval(this.watchdog);
     this.closeSockets();
@@ -275,6 +279,7 @@
       return;
     }
     this.emit("status", { state: "connecting", text: "Connecting to " + p.label });
+    if (p.backfill && !this.buffer) this.buffer = [];
     var cycle = ++this.cycle, opened = 0, failed = false;
 
     function fail(text) {
@@ -293,6 +298,7 @@
         self.retry = 0;
         self.lastMsg = Date.now();
         self.emit("status", { state: "open", text: "Connected to " + p.label });
+        self.startBackfill(cycle);
         if (p.loadLevels) {
           p.loadLevels(self.symKey).then(function (lv) { if (lv) self.emit("levels", lv); })
             .catch(function () { self.emit("notice", "Higher-timeframe levels unavailable from " + p.label); });
@@ -323,7 +329,43 @@
     });
   };
 
+  /* History first, then live: live trades are held back until the backfill has been applied, and any
+   * trade with an id at or below the last backfilled id is dropped. After a reconnect the same call
+   * fills the gap (afterId) so bars stay complete. */
+  WebSocketFeed.prototype.startBackfill = function (cycle) {
+    var self = this, p = this.provider;
+    if (!p.backfill) return;
+    this.buffer = this.buffer || [];
+    var opts = { afterId: this.lastId, spanMs: this.cfg.barMs * this.cfg.live.backfillBars, maxPages: this.cfg.live.backfillPages };
+    Promise.resolve().then(function () { return p.backfill(self.symKey, opts); }).then(function (trades) {
+      if (cycle !== self.cycle) return;
+      var buffered = self.buffer;
+      self.buffer = null;
+      (trades || []).forEach(function (t) { self.route(t); });
+      buffered.forEach(function (t) { self.route(t); });
+      var list = trades || [];
+      if (list.length) {
+        var mins = Math.max(1, Math.round((list[list.length - 1].ts - list[0].ts) / 60000));
+        self.emit("notice", "Loaded " + list.length + " historical trades covering about " + mins + " min; older bars are not available");
+      }
+    }).catch(function (err) {
+      if (cycle !== self.cycle) return;
+      var buffered = self.buffer || [];
+      self.buffer = null;
+      buffered.forEach(function (t) { self.route(t); });
+      self.emit("notice", "History backfill unavailable (" + (err && err.message ? err.message : "error") + "); charts start from now");
+    });
+  };
+
   WebSocketFeed.prototype.route = function (e) {
+    if (e.type === "notice") { this.emit("notice", String(e.text || "")); return; }
+    if (e.type === "trade") {
+      if (this.buffer) { this.buffer.push(e); return; }
+      if (e.id != null) {
+        if (this.lastId != null && e.id <= this.lastId) return;
+        this.lastId = e.id;
+      }
+    }
     if (e.type === "trade" || e.type === "book" || e.type === "delta" || e.type === "quote" || e.type === "levels") this.emit(e.type, e);
   };
 
@@ -337,6 +379,44 @@
 
   /* ---------- Provider adapters ---------- */
   function num(x) { return Number(x); }
+
+  /* Binance aggTrade: m = buyer is the maker, so the aggressor was a seller. Works for stream and REST rows. */
+  function aggTradeEvent(d) {
+    var e = { type: "trade", price: num(d.p), size: num(d.q), side: d.m ? "sell" : "buy", ts: d.T };
+    if (d.a != null) e.id = d.a;
+    return e;
+  }
+
+  /* Pages backwards from "now" until spanMs of history is covered (or maxPages), or forwards from afterId. */
+  function binanceBackfill(sym, opts) {
+    var base = "https://fapi.binance.com/fapi/v1/aggTrades?limit=1000&symbol=" + encodeURIComponent(sym);
+    function page(query) {
+      return fetch(base + query).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+    }
+    if (opts.afterId != null) {
+      var out = [];
+      return (function next(fromId, n) {
+        return page("&fromId=" + (fromId + 1)).then(function (rows) {
+          rows.forEach(function (d) { out.push(aggTradeEvent(d)); });
+          if (rows.length < 1000 || n >= opts.maxPages) return out;
+          return next(rows[rows.length - 1].a, n + 1);
+        });
+      })(opts.afterId, 1);
+    }
+    var all = [], newest = null, minId = Infinity;
+    return (function back(query, n) {
+      return page(query).then(function (rows) {
+        rows = rows.filter(function (d) { return d.a < minId; });
+        if (!rows.length) return all;
+        minId = rows[0].a;
+        all = rows.map(aggTradeEvent).concat(all);
+        if (newest == null) newest = rows[rows.length - 1].T;
+        var oldest = rows[0];
+        if (newest - oldest.T >= opts.spanMs || n >= opts.maxPages || oldest.a <= 0) return all;
+        return back("&fromId=" + Math.max(0, oldest.a - 1000), n + 1);
+      });
+    })("", 1);
+  }
 
   var binance = {
     label: "Binance Futures",
@@ -354,7 +434,7 @@
     normalize: function (msg) {
       var d = msg && msg.data ? msg.data : msg;
       if (!d) return [];
-      if (d.e === "aggTrade") return [{ type: "trade", price: num(d.p), size: num(d.q), side: d.m ? "sell" : "buy", ts: d.T }];
+      if (d.e === "aggTrade") return [aggTradeEvent(d)];
       if (d.e === "depthUpdate") {
         var b = d.b || d.bids || [], a = d.a || d.asks || [];
         return [{ type: "book", bids: b.map(function (x) { return [num(x[0]), num(x[1])]; }), asks: a.map(function (x) { return [num(x[0]), num(x[1])]; }) }];
@@ -364,6 +444,7 @@
       }
       return [];
     },
+    backfill: binanceBackfill,
     loadLevels: function (sym) {
       var base = "https://fapi.binance.com/fapi/v1/klines?symbol=" + encodeURIComponent(sym);
       return Promise.all([fetch(base + "&interval=1d&limit=3"), fetch(base + "&interval=1w&limit=1")]).then(function (rs) {
@@ -388,6 +469,17 @@
     unsupported: "Set OF.config.live.url (or ?url=wss://...) to your relay endpoint"
   };
 
+  /* CME futures through relay/databento_relay.py, which keeps the API key server-side. */
+  var databento = {
+    label: "Databento (CME, local relay)",
+    symbols: ["ES", "NQ", "CL", "GC"],
+    supports: function (sym) { return databento.symbols.indexOf(sym) >= 0; },
+    url: function (sym, live) { return live.databentoUrl.replace("{symbol}", encodeURIComponent(sym)); },
+    subscribe: function () { return []; },
+    normalize: relay.normalize,
+    unsupported: "Databento supports ES, NQ, CL and GC through the local relay (python relay/databento_relay.py)"
+  };
+
   function needsRelay(label) {
     return { label: label, supports: function () { return false; }, url: function () { return null; }, normalize: function () { return []; },
       unsupported: label + " requires an API key, so run a server-side relay and use the \"relay\" provider" };
@@ -395,7 +487,7 @@
 
   OF.feeds = {
     Emitter: Emitter, SimulatedFeed: SimulatedFeed, WebSocketFeed: WebSocketFeed, mulberry32: mulberry32,
-    providers: { binance: binance, relay: relay, databento: needsRelay("Databento"), rithmic: needsRelay("Rithmic"), polygon: needsRelay("Polygon") },
+    providers: { binance: binance, relay: relay, databento: databento, rithmic: needsRelay("Rithmic"), polygon: needsRelay("Polygon") },
     registerProvider: function (name, provider) { OF.feeds.providers[name] = provider; }
   };
 })(globalThis);
