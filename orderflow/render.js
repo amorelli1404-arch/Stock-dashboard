@@ -5,7 +5,7 @@
   var OF = (g.OF = g.OF || {});
   var A = OF.analytics, F = OF.fmt;
 
-  var AXIS_W = 64, STRIP_H = 40, TOP_PAD = 16, MONO = "ui-monospace, 'Cascadia Mono', Consolas, monospace";
+  var AXIS_W = 64, STRIP_H = 40, TOP_PAD = 16, MONO = "'JetBrains Mono', 'Roboto Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace";
   var AMBER = "#fbbf24", NICE_AGGR = [1, 2, 4, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000];
   var ANCHOR_COLORS = ["#22d3ee", "#f472b6", "#a3e635", "#fb923c"];
   var HTF = [["pdh", "PDH", "#f87171"], ["pdl", "PDL", "#34d399"], ["pdc", "PDC", "#94a3b8"], ["onh", "ONH", "#fbbf24"], ["onl", "ONL", "#60a5fa"], ["wo", "WO", "#c084fc"]];
@@ -21,7 +21,7 @@
   }
 
   function palette() {
-    var cs = getComputedStyle(document.documentElement);
+    var cs = getComputedStyle(document.getElementById("ofRoot") || document.documentElement);
     function v(n, fb) { return (cs.getPropertyValue(n) || "").trim() || fb; }
     return { bull: v("--bull", "#10b981"), bear: v("--bear", "#ef4444"), text: v("--text", "#f3f4f6"), muted: v("--text-muted", "#94a3b8"),
       faint: v("--text-faint", "#6b7280"), accent: v("--accent", "#8b5cf6"), bg: v("--bg", "#0d0e15"), surface: v("--surface-solid", "#181925"), border: v("--border", "#2a2c3d") };
@@ -74,7 +74,7 @@
     var headerH = 20, rowH = cfg.ladderRowHeight, rows = Math.max(3, Math.floor((h - headerH) / rowH));
     var lastTick = m.l1.last != null ? A.toTick(m.l1.last, m.tickSize) : (m.l1.bid != null ? A.toTick(m.l1.bid, m.tickSize) : null);
     if (lastTick == null) { message(ctx, w, h, "Waiting for market data…", pal); return; }
-    var topTick = lastTick + Math.floor(rows / 2), dec = m.sym.sizeDec;
+    var topTick = lastTick + (ctl.ladderOffset || 0) + Math.floor(rows / 2), dec = m.sym.sizeDec, acct = ctl.acct;
     var bestBid = m.l1.bid != null ? A.toTick(m.l1.bid, m.tickSize) : null, bestAsk = m.l1.ask != null ? A.toTick(m.l1.ask, m.tickSize) : null;
     var wBid = w * 0.21, wPrice = w * 0.25, wAsk = w * 0.21, xPrice = wBid, xAsk = wBid + wPrice, xVol = xAsk + wAsk, wVol = w - xVol;
 
@@ -106,6 +106,7 @@
       var y = headerH + r * rowH, isLast = tick === lastTick, price = F.price(tick * m.tickSize, m.tickSize);
       var bid = m.bids.get(tick), ask = m.asks.get(tick), vol = m.levels.get(tick);
       if (r % 2) { ctx.fillStyle = rgba(pal.border, 0.18); ctx.fillRect(0, y, w, rowH); }
+      if (ctl.crossTick != null && Math.round(ctl.crossTick) === tick) { ctx.fillStyle = rgba(pal.text, 0.09); ctx.fillRect(0, y, w, rowH); }
 
       if (bid) {
         ctx.fillStyle = rgba(pal.bull, 0.38);
@@ -135,7 +136,13 @@
       }
       ctx.fillStyle = isLast ? pal.text : pal.muted; ctx.textAlign = "right"; ctx.font = (isLast ? "bold " : "") + "11px " + MONO;
       ctx.fillText(price, xPrice + wPrice - 5, y + 13);
-      var tg = tags.get(tick);
+      var mine = OF.renderExt.ladderMarks(acct, tick, m.tickSize, pal);
+      if (mine.length) {
+        ctx.strokeStyle = mine[0].color; ctx.lineWidth = 1.5; ctx.strokeRect(xPrice + 1, y + 1, wPrice - 2, rowH - 2);
+        ctx.fillStyle = mine[0].color; ctx.font = "bold 9px " + MONO; ctx.textAlign = "left";
+        ctx.fillText(mine.map(function (k) { return k.label; }).join(" "), xPrice + 4, y + 12);
+      }
+      var tg = mine.length ? null : tags.get(tick);
       if (tg) { ctx.fillStyle = pal.accent; ctx.font = "bold 8px sans-serif"; ctx.textAlign = "left"; ctx.fillText(tg.slice(0, 2).join("/"), xPrice + 3, y + 12); }
 
       if (vol) {
@@ -148,32 +155,54 @@
     }
     ctx.strokeStyle = pal.border; ctx.lineWidth = 1;
     [xPrice, xAsk, xVol].forEach(function (x) { ctx.beginPath(); ctx.moveTo(x + 0.5, headerH); ctx.lineTo(x + 0.5, h); ctx.stroke(); });
+    return { topTick: topTick, rowH: rowH, headerH: headerH, rows: rows, wBid: wBid, xAsk: xAsk, xPrice: xPrice, wPrice: wPrice };
   }
 
   /* ---------- Main chart: footprint + VWAP + HTF levels + volume profile ---------- */
-  function computeView(m, w, h, n) {
-    var vb = visibleBars(m, n);
-    if (!vb.count) return null;
+  /* Padded tick range covering the visible bars and the last price. Shared by the footprint and heatmap. */
+  function priceRange(m, vb) {
     var lo = Infinity, hi = -Infinity;
     vb.bars.forEach(function (b) { if (b.l < lo) lo = b.l; if (b.h > hi) hi = b.h; });
     if (m.l1.last != null) { var lt = A.toTick(m.l1.last, m.tickSize); lo = Math.min(lo, lt); hi = Math.max(hi, lt); }
     var pad = Math.max(2, Math.round((hi - lo) * 0.06));
-    lo -= pad; hi += pad;
+    return { lo: lo - pad, hi: hi + pad };
+  }
+
+  function computeView(m, w, h, n) {
+    var vb = visibleBars(m, n);
+    if (!vb.count) return null;
+    var pr = priceRange(m, vb), lo = pr.lo, hi = pr.hi;
     var chartH = h - TOP_PAD - STRIP_H, aggr = niceAggr(Math.ceil(m.cfg.rowMinPx * (hi - lo + 1) / chartH));
     var kLo = Math.floor(lo / aggr), kHi = Math.floor(hi / aggr), rows = kHi - kLo + 1, lay = layoutX(w, n);
-    return { n: n, count: vb.count, startIdx: vb.startIdx, bars: vb.bars, aggr: aggr, kLo: kLo, kHi: kHi, rows: rows, rowH: chartH / rows,
+    return { lo: lo, hi: hi, n: n, count: vb.count, startIdx: vb.startIdx, bars: vb.bars, aggr: aggr, kLo: kLo, kHi: kHi, rows: rows, rowH: chartH / rows,
       chartTop: TOP_PAD, chartH: chartH, x0: lay.x0, x1: lay.x1, barW: lay.barW, profileW: lay.profileW, w: w, h: h, tickSize: m.tickSize };
   }
   function yU(v, u) { return v.chartTop + ((v.kHi + 1) - (u + 0.5) / v.aggr) * v.rowH; }
   function uAtY(v, y) { return ((v.kHi + 1) - (y - v.chartTop) / v.rowH) * v.aggr - 0.5; }
   function slotX(v, i) { return v.x0 + (v.n - v.count + i) * v.barW; }
 
-  function drawBars(ctx, m, v, pal) {
-    var cfg = m.cfg, dec = m.sym.sizeDec;
+  function sessionLookup(cfg) {
+    var by = {};
+    cfg.sessions.forEach(function (x) { by[x.id] = x; });
+    return by;
+  }
+
+  function drawBars(ctx, m, v, pal, ctl) {
+    var cfg = m.cfg, dec = m.sym.sizeDec, mode = ctl.fpMode || "bidask", sess = ctl.showSessions === false ? null : sessionLookup(cfg), prevSess = null;
     v.bars.forEach(function (bar, i) {
-      var bx = slotX(v, i), agg = A.aggregate(bar.levels, v.aggr), imb = A.imbalances(agg, cfg.imbalanceRatio, m.sym.imbMin);
+      var bx = slotX(v, i), sd = sess && sess[bar.sess];
+      if (sd) {
+        ctx.fillStyle = rgba(sd.color, 0.07); ctx.fillRect(bx, 0, v.barW, v.chartTop + v.chartH + STRIP_H);
+        if (bar.sess !== prevSess) {
+          ctx.fillStyle = sd.color; ctx.font = "bold 9px sans-serif"; ctx.textAlign = "left";
+          ctx.fillText(sd.label.toUpperCase(), bx + 3, 11);
+          ctx.fillRect(bx, 0, 2, v.chartTop);
+        }
+      }
+      prevSess = bar.sess;
+      var agg = A.aggregate(bar.levels, v.aggr), imb = A.imbalances(agg, cfg.imbalanceRatio, m.sym.imbMin);
       var xc0 = bx + 13, xc1 = bx + v.barW - 3, mid = (xc0 + xc1) / 2, cellW = xc1 - xc0, maxV = 1e-9, bs = A.barStats(agg);
-      agg.forEach(function (c) { maxV = Math.max(maxV, c.a, c.b); });
+      agg.forEach(function (c) { maxV = mode === "bidask" ? Math.max(maxV, c.a, c.b) : Math.max(maxV, mode === "delta" ? Math.abs(c.a - c.b) : c.a + c.b); });
 
       var up = bar.c >= bar.o, cc = up ? pal.bull : pal.bear, cx = bx + 7;
       ctx.strokeStyle = cc; ctx.lineWidth = 1;
@@ -185,6 +214,7 @@
       agg.forEach(function (c, k) {
         var y = v.chartTop + (v.kHi - k) * v.rowH;
         if (y + v.rowH < v.chartTop || y > v.chartTop + v.chartH) return;
+        if (mode !== "bidask") { drawSingleCell(ctx, c, mode, xc0, y, cellW, v.rowH, maxV, dec, showText, pal); return; }
         var sellImb = imb.sell.has(k), buyImb = imb.buy.has(k);
         ctx.fillStyle = rgba(pal.bear, (sellImb ? 0.35 : 0.06) + 0.3 * (c.b / maxV)); ctx.fillRect(xc0, y, mid - xc0, v.rowH - 0.5);
         ctx.fillStyle = rgba(pal.bull, (buyImb ? 0.35 : 0.06) + 0.3 * (c.a / maxV)); ctx.fillRect(mid, y, xc1 - mid, v.rowH - 0.5);
@@ -216,6 +246,17 @@
         ctx.fillStyle = pal.faint; ctx.fillText(F.time(bar.t), tx, ty + 37);
       }
     });
+  }
+
+  /* One value per price: net delta (ask minus bid) or total volume. */
+  function drawSingleCell(ctx, c, mode, x, y, w, rowH, maxV, dec, showText, pal) {
+    var val = mode === "delta" ? c.a - c.b : c.a + c.b, strength = Math.abs(val) / maxV;
+    var col = mode === "delta" ? (val >= 0 ? pal.bull : pal.bear) : pal.accent;
+    ctx.fillStyle = rgba(col, 0.06 + 0.5 * strength); ctx.fillRect(x, y, w, rowH - 0.5);
+    if (!showText) return;
+    ctx.font = (strength > 0.6 ? "bold " : "") + Math.min(11, Math.floor(rowH - 2)) + "px " + MONO;
+    ctx.textAlign = "center"; ctx.fillStyle = strength > 0.15 ? pal.text : pal.muted;
+    ctx.fillText(mode === "delta" ? F.signed(val, dec) : F.size(val, dec), x + w / 2, y + rowH - 3);
   }
 
   function polyline(ctx, pts, color, width, dash) {
@@ -347,8 +388,21 @@
     return i >= 0 && i < v.count ? i : -1;
   }
 
+  /* Synchronised crosshair: other panels publish a time and price; this panel maps them to its own pixels. */
+  function drawCross(ctx, m, v, ctl, pal) {
+    if (ctl.crossT == null && ctl.crossTick == null) return;
+    var x = ctl.crossT == null ? null : OF.renderExt.timeToX(m, v.n, v.w, ctl.crossT);
+    ctx.strokeStyle = rgba(pal.text, 0.25); ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.beginPath();
+    if (x != null) { ctx.moveTo(Math.round(x) + 0.5, v.chartTop); ctx.lineTo(Math.round(x) + 0.5, v.chartTop + v.chartH); }
+    if (ctl.crossTick != null) {
+      var y = yU(v, ctl.crossTick);
+      if (y >= v.chartTop && y <= v.chartTop + v.chartH) { ctx.moveTo(v.x0, Math.round(y) + 0.5); ctx.lineTo(v.x1, Math.round(y) + 0.5); }
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+
   function drawHover(ctx, m, v, ctl, pal) {
-    if (ctl.hoverCanvas !== "main" || ctl.hoverX == null) return;
+    if (ctl.hoverCanvas !== "main" || ctl.hoverX == null) { drawCross(ctx, m, v, ctl, pal); return; }
     var x = ctl.hoverX, y = ctl.hoverY, i = hoverBarIndex(v, x);
     ctx.strokeStyle = rgba(pal.text, 0.25); ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
     ctx.beginPath(); ctx.moveTo(x + 0.5, v.chartTop); ctx.lineTo(x + 0.5, v.chartTop + v.chartH); ctx.moveTo(v.x0, y + 0.5); ctx.lineTo(v.x1, y + 0.5); ctx.stroke(); ctx.setLineDash([]);
@@ -375,9 +429,11 @@
     if (!v) { message(s.ctx, s.w, s.h, "Waiting for trades…", pal); return null; }
     var st = stats(m, ctl);
     drawAxis(s.ctx, m, v, pal);
-    drawBars(s.ctx, m, v, pal);
+    drawBars(s.ctx, m, v, pal, ctl);
     drawProfileOverlay(s.ctx, m, v, pal, st);
     drawOverlays(s.ctx, m, v, pal);
+    OF.renderExt.sessionLevels(s.ctx, m, v, pal, ctl);
+    OF.renderExt.tradeLines(s.ctx, m, v, pal, ctl.acct);
     drawHover(s.ctx, m, v, ctl, pal);
     return v;
   }
@@ -419,9 +475,10 @@
       ctx.fillStyle = c; ctx.font = "bold 9px sans-serif"; ctx.textAlign = "left";
       ctx.fillText(bull ? "BULL DIV" : "BEAR DIV", cx(i2) + 6, y(vb.bars[i2].cvdC) + (bull ? 12 : -5));
     });
-    if (ctl.hoverX != null && ctl.hoverCanvas) {
+    var chx = ctl.crossT == null ? null : OF.renderExt.timeToX(m, n, w, ctl.crossT);
+    if (chx != null) {
       ctx.strokeStyle = rgba(pal.text, 0.25); ctx.setLineDash([3, 3]);
-      ctx.beginPath(); ctx.moveTo(ctl.hoverX + 0.5, top); ctx.lineTo(ctl.hoverX + 0.5, h - bottom); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(Math.round(chx) + 0.5, top); ctx.lineTo(Math.round(chx) + 0.5, h - bottom); ctx.stroke(); ctx.setLineDash([]);
     }
   }
 
@@ -482,5 +539,8 @@
   }
 
   OF.render = { drawLadder: drawLadder, drawMain: drawMain, drawCVD: drawCVD, drawProfilePanel: drawProfilePanel,
-    hoverBarIndex: hoverBarIndex, uAtY: uAtY, stats: stats, niceAggr: niceAggr, layoutX: layoutX, computeView: computeView };
+    hoverBarIndex: hoverBarIndex, uAtY: uAtY, stats: stats, niceAggr: niceAggr, layoutX: layoutX, computeView: computeView,
+    /* Shared helpers for render_ext.js */
+    u: { setup: setup, palette: palette, rgba: rgba, visibleBars: visibleBars, polyline: polyline, message: message, priceRange: priceRange,
+      yU: yU, MONO: MONO, AMBER: AMBER, AXIS_W: AXIS_W, STRIP_H: STRIP_H, TOP_PAD: TOP_PAD, niceAggr: niceAggr } };
 })(globalThis);

@@ -2,7 +2,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-["config", "analytics", "calendar", "engine", "feeds"].forEach((f) => require(`../orderflow/${f}.js`));
+["config", "analytics", "calendar", "sessions", "engine", "feeds", "trading", "audio"].forEach((f) => require(`../orderflow/${f}.js`));
 const OF = globalThis.OF;
 const A = OF.analytics;
 

@@ -1,6 +1,9 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
 <meta charset="utf-8">
 <title>Index Watch — S&P 500 / Nasdaq 100 Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="orderflow/orderflow.css">
 <style>
   /* ============ Tokens ============ */
@@ -1449,16 +1452,16 @@
 
       <!-- ============ ORDER FLOW (futures) ============ -->
       <section class="view" data-view="orderflow">
-        <div id="ofRoot">
-          <div class="page-head">
+        <div id="ofRoot" data-ws="scalp">
+          <div class="page-head of-head">
             <div>
               <h1 class="page-title">Order Flow &mdash; Futures</h1>
-              <p class="page-dek">Depth of market, footprint, CVD, volume profile and VWAP on a live or replayed feed. Replay is simulated; Live streams from a WebSocket.</p>
+              <p class="page-dek">Liquidity heatmap, depth of market, footprint, delta, CVD, tape and volume profile on a live or replayed feed, with simulated one-click execution.</p>
             </div>
             <span class="of-status"><span class="of-dot" id="ofStatusDot"></span><span id="ofStatusText">Starting…</span></span>
           </div>
 
-          <div class="card of-toolbar">
+          <div class="of-toolbar">
             <div class="of-group"><span class="of-label">Feed</span>
               <div class="of-seg"><button type="button" data-of-mode="replay">Simulated replay</button><button type="button" data-of-mode="live">Live feed</button></div>
             </div>
@@ -1470,58 +1473,144 @@
             <div class="of-group" id="ofUrlWrap" hidden><span class="of-label">Relay URL</span><input type="text" id="ofUrl" placeholder="wss://your-relay.example/stream?symbol={symbol}" aria-label="Relay WebSocket URL"></div>
             <span class="of-spacer"></span>
             <div class="of-group"><span class="of-status mono" id="ofRate">0 msg/s</span><span class="of-status mono" id="ofLatency">—</span></div>
-            <div class="of-group"><button type="button" class="of-btn" id="ofZoomOut" title="Show more bars">&minus; bars</button><button type="button" class="of-btn" id="ofZoomIn" title="Show fewer bars">+ bars</button>
-              <button type="button" class="of-btn" id="ofClearAnchors">Clear anchors</button></div>
           </div>
 
-          <div class="card of-cal">
+          <div class="of-toolbar of-toolbar-2">
+            <div class="of-group"><span class="of-label">Workspace</span>
+              <div class="of-seg" id="ofWorkspaces">
+                <button type="button" data-of-ws="scalp" title="Ladder, execution, footprint, delta and tape">Scalping DOM</button>
+                <button type="button" data-of-ws="macro" title="Footprint, CVD, delta and profile">Macro Structure</button>
+                <button type="button" data-of-ws="tape" title="Heatmap, ladder, tape and alerts">Tape &amp; Heatmap</button>
+              </div>
+            </div>
+            <div class="of-group"><span class="of-label">Footprint</span>
+              <select id="ofFpMode" aria-label="Footprint cell content"><option value="bidask">Bid &times; Ask</option><option value="delta">Delta</option><option value="volume">Volume</option></select></div>
+            <label class="of-check"><input type="checkbox" id="ofShowSessions" checked> Sessions</label>
+            <label class="of-check"><input type="checkbox" id="ofShowIB" checked> IB / ORB</label>
+            <span class="of-spacer"></span>
+            <div class="of-group">
+              <button type="button" class="of-btn" id="ofZoomOut" title="Show more bars">&minus; bars</button><button type="button" class="of-btn" id="ofZoomIn" title="Show fewer bars">+ bars</button>
+              <button type="button" class="of-btn" id="ofClearAnchors">Clear anchors</button>
+              <button type="button" class="of-btn" id="ofSound" aria-pressed="false" title="Audio cues for block prints, sweeps, absorption and fills">Sound: off</button>
+              <button type="button" class="of-btn of-btn-accent" id="ofFullscreen" aria-pressed="false" title="Full screen (Shift+F)">Full screen</button>
+            </div>
+          </div>
+
+          <div class="of-cal">
             <div class="of-cal-next" id="ofCalNext">Loading calendar…</div>
             <div class="of-chips" id="ofCalChips"></div>
             <div class="of-cal-alert" id="ofCalAlert" hidden></div>
           </div>
 
           <div class="of-grid">
-            <div class="card of-panel">
-              <div class="of-panel-head">Depth of Market <small>walls &middot; icebergs</small></div>
-              <canvas id="ofLadder" aria-label="Depth of market price ladder"></canvas>
+            <div class="of-col of-col-left">
+              <div class="of-pane" data-pane="ladder">
+                <div class="of-panel-head">Depth of Market <small>click bid / ask = limit &middot; right-click cancels &middot; wheel scrolls</small></div>
+                <div class="of-cv"><canvas id="ofLadder" aria-label="Depth of market price ladder"></canvas></div>
+              </div>
+              <div class="of-pane" data-pane="trade">
+                <div class="of-panel-head">Execution <span class="of-sim-badge" title="Orders are simulated against the book. Nothing is sent to a broker.">SIMULATED</span></div>
+                <div class="of-trade">
+                  <div class="of-fields">
+                    <label>Qty<input type="number" id="ofQty" min="0" step="any" inputmode="decimal"></label>
+                    <label>Stop (ticks)<input type="number" id="ofStopTicks" min="0" step="1" inputmode="numeric"></label>
+                    <label>Target (ticks)<input type="number" id="ofTargetTicks" min="0" step="1" inputmode="numeric"></label>
+                    <label>Max daily loss ($)<input type="number" id="ofMaxLoss" min="0" step="10" inputmode="numeric"></label>
+                  </div>
+                  <div class="of-xbtns">
+                    <button type="button" class="of-x buy" id="ofBuyMkt">Buy Mkt</button>
+                    <button type="button" class="of-x sell" id="ofSellMkt">Sell Mkt</button>
+                    <button type="button" class="of-x" id="ofJoinBid">Join Bid</button>
+                    <button type="button" class="of-x" id="ofJoinAsk">Join Ask</button>
+                    <button type="button" class="of-x warn" id="ofFlatten">Flatten All</button>
+                    <button type="button" class="of-x" id="ofReverse">Reverse</button>
+                  </div>
+                  <div class="of-pos">
+                    <div>Position<b id="ofPosQty">Flat</b></div>
+                    <div>Avg price<b id="ofPosAvg">—</b></div>
+                    <div>Unrealized<b id="ofPosUnreal">$0.00</b></div>
+                    <div>Realized<b id="ofPosReal">$0.00</b></div>
+                  </div>
+                  <div class="of-risk"><div class="of-risk-bar"><i id="ofRiskFill"></i></div><span id="ofRiskText">Day P&amp;L $0.00</span></div>
+                  <div class="of-lock" id="ofLock" hidden><span id="ofLockText"></span><button type="button" class="of-btn" id="ofResetDay">Reset day</button></div>
+                  <p class="of-xmsg" id="ofXMsg" role="status"></p>
+                </div>
+              </div>
             </div>
 
-            <div class="of-center">
-              <div class="card of-panel">
-                <div class="of-panel-head">Footprint &middot; VWAP &middot; Profile <small>click a bar to anchor VWAP &middot; wheel to zoom</small></div>
+            <div class="of-split" data-split="l" role="separator" aria-orientation="vertical" aria-label="Resize left column"></div>
+
+            <div class="of-col of-col-center">
+              <div class="of-pane" data-pane="main">
+                <div class="of-panel-head">Footprint &middot; VWAP &middot; Sessions <small>click a bar to anchor VWAP &middot; wheel to zoom</small></div>
                 <div class="of-l1">
                   <div>Last<span class="of-val mono" id="ofLast">—</span></div>
                   <div>Bid<b id="ofBid">—</b></div>
                   <div>Ask<b id="ofAsk">—</b></div>
                   <div>Spread<b id="ofSpread">—</b></div>
                   <div>Volume<b id="ofVol">—</b></div>
-                  <div>Session &Delta;<span class="of-val mono" id="ofDelta">—</span></div>
+                  <div>Session &Delta;<span class="of-val mono" id="ofDeltaVal">—</span></div>
                   <div>VWAP &plusmn;&sigma;<b id="ofVwap">—</b></div>
                 </div>
-                <canvas id="ofMain" aria-label="Footprint chart with VWAP, key levels and volume profile"></canvas>
+                <div class="of-cv"><canvas id="ofMain" aria-label="Footprint chart with VWAP, key levels and volume profile"></canvas></div>
               </div>
-              <div class="card of-panel">
+              <div class="of-pane" data-pane="heat">
+                <div class="of-panel-head">Liquidity Heatmap <small>resting depth over time &middot; spoofing and pulls</small></div>
+                <div class="of-cv"><canvas id="ofHeat" aria-label="Liquidity heatmap of resting limit orders over time"></canvas></div>
+              </div>
+              <div class="of-pane" data-pane="delta">
+                <div class="of-panel-head">Delta <small>per bar, synced to the footprint</small></div>
+                <div class="of-cv"><canvas id="ofDelta" aria-label="Delta per bar"></canvas></div>
+              </div>
+              <div class="of-pane" data-pane="cvd">
                 <div class="of-panel-head">Cumulative Volume Delta <small>synced to the footprint bars</small></div>
-                <canvas id="ofCvd" aria-label="Cumulative volume delta"></canvas>
+                <div class="of-cv"><canvas id="ofCvd" aria-label="Cumulative volume delta"></canvas></div>
               </div>
             </div>
 
-            <div class="of-right">
-              <div class="card of-panel">
+            <div class="of-split" data-split="r" role="separator" aria-orientation="vertical" aria-label="Resize right column"></div>
+
+            <div class="of-col of-col-right">
+              <div class="of-pane" data-pane="profile">
                 <div class="of-panel-head">Session Profile
                   <div class="of-seg"><button type="button" class="active" data-of-prof="volume">Volume</button><button type="button" data-of-prof="tpo">TPO</button></div>
                 </div>
-                <canvas id="ofProfile" aria-label="Volume profile or TPO market profile"></canvas>
+                <div class="of-cv"><canvas id="ofProfile" aria-label="Volume profile or TPO market profile"></canvas></div>
                 <div class="of-stats" id="ofStats"></div>
               </div>
-              <div class="card of-panel">
+              <div class="of-pane" data-pane="tape">
+                <div class="of-panel-head">Time &amp; Sales
+                  <span class="of-tape-ctl">
+                    <label title="Hide prints smaller than this. Sweeps, blocks and iceberg hits always show.">Min size <input type="number" id="ofTapeMin" min="0" step="any" value="0" inputmode="decimal"></label>
+                    <label class="of-check"><input type="checkbox" id="ofTapeKey"> Key prints</label>
+                  </span>
+                </div>
+                <div class="of-tape" id="ofTape" role="log" aria-label="Time and sales"></div>
+              </div>
+              <div class="of-pane" data-pane="alerts">
                 <div class="of-panel-head">Alerts</div>
                 <div class="of-alerts" id="ofAlerts"></div>
               </div>
             </div>
           </div>
+
           <p class="of-notice" id="ofNotice" role="status"></p>
-          <p class="of-help">Replay uses a seeded simulator, so prices are illustrative. Live mode needs a reachable WebSocket; futures vendors (Databento, Rithmic, Polygon) require a server-side relay that holds your API key. See the README.</p>
+          <p class="of-help">Replay uses a seeded simulator, so prices are illustrative. Live mode needs a reachable WebSocket; futures vendors (Databento, Rithmic, Polygon) require a server-side relay that holds your API key. Execution is simulated against the book and never reaches a broker. See the README.</p>
+
+          <div class="of-foot" id="ofFoot">
+            <span class="of-keys">
+              <span><kbd>Shift</kbd><kbd>B</kbd> Buy ask</span>
+              <span><kbd>Shift</kbd><kbd>S</kbd> Sell bid</span>
+              <span><kbd>Space</kbd> Recenter DOM</span>
+              <span><kbd>Esc</kbd> / <kbd>Shift</kbd><kbd>X</kbd> Flatten</span>
+              <span><kbd>Shift</kbd><kbd>F</kbd> Full screen</span>
+            </span>
+            <span class="of-foot-r">
+              <span id="ofFootPos">Flat</span>
+              <span class="mono" id="ofFootClock">ET --:--:--</span>
+              <span class="of-sim-badge">SIM</span>
+            </span>
+          </div>
         </div>
       </section>
 
@@ -3847,9 +3936,14 @@
 <script src="orderflow/config.js"></script>
 <script src="orderflow/analytics.js"></script>
 <script src="orderflow/calendar.js"></script>
+<script src="orderflow/sessions.js"></script>
 <script src="orderflow/engine.js"></script>
 <script src="orderflow/feeds.js"></script>
+<script src="orderflow/trading.js"></script>
+<script src="orderflow/audio.js"></script>
 <script src="orderflow/render.js"></script>
+<script src="orderflow/render_ext.js"></script>
 <script src="orderflow/ui.js"></script>
+<script src="orderflow/ui_terminal.js"></script>
 
 </body></html>

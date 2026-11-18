@@ -4,7 +4,7 @@
 (function (g) {
   "use strict";
   var OF = (g.OF = g.OF || {});
-  var A = OF.analytics;
+  var A = OF.analytics, S = OF.sessions;
 
   function create(symbolKey, config) {
     var cfg = config || OF.config, sym = cfg.symbols[symbolKey];
@@ -20,7 +20,10 @@
       tracker: new A.IcebergTracker(cfg.icebergMultiple, sym.iceMin),
       walls: { b: new Set(), a: new Set() }, alerted: new Set(),
       lastSide: null, lastTradeTs: 0, lastTs: 0,
-      alerts: [], trades: 0, rev: 0
+      alerts: [], trades: 0, rev: 0,
+      ib: new S.RangeTracker(cfg.rthOpenMin, cfg.ibMinutes), orb: new S.RangeTracker(cfg.rthOpenMin, cfg.orbMinutes),
+      tape: [], tapeSeq: 0, sweep: null,
+      heat: { cols: [], lastT: 0, pend: { px: null, big: null, traded: new Map() }, lastPullAlert: 0 }
     };
   }
 
@@ -31,6 +34,7 @@
 
   function newBar(m, t, tick) {
     return { seq: m.seq++, t: t, o: tick, h: tick, l: tick, c: tick, levels: new Map(), vol: 0, delta: 0,
+      bv: 0, sv: 0, dMax: 0, dMin: 0, sess: S.sessionOf(t, m.cfg.sessions),
       cvdO: m.cvd, cvdH: m.cvd, cvdL: m.cvd, cvdC: m.cvd, vw: null, sd: 0, av: {} };
   }
 
@@ -78,7 +82,10 @@
       if (side === "buy") cell.a += size; else cell.b += size;
     });
     bar.vol += size;
+    if (side === "buy") bar.bv += size; else bar.sv += size;
     bar.delta += signed;
+    if (bar.delta > bar.dMax) bar.dMax = bar.delta;
+    if (bar.delta < bar.dMin) bar.dMin = bar.delta;
     m.cvd += signed;
     m.delta += signed;
     bar.cvdC = m.cvd;
@@ -102,13 +109,115 @@
     m.lastTs = ts;
     m.trades++;
 
+    var entry = recordTape(m, ts, price, size, side, tick);
+    trackRanges(m, ts, price);
+    var pend = m.heat.pend;
+    pend.px = tick;
+    pend.traded.set(tick, (pend.traded.get(tick) || 0) + size);
+    if (!pend.big || size > pend.big.size) pend.big = { tick: tick, size: size, side: side };
+
     var hit = m.tracker.onTrade(side === "buy" ? "a" : "b", tick, size);
     if (hit) {
+      entry.ice = true;
       pushAlert(m, "warn", "Iceberg absorption on the " + (hit.side === "b" ? "bid" : "offer") + " at " + OF.fmt.price(hit.tick * m.tickSize, m.tickSize) +
         ": " + OF.fmt.size(hit.traded, m.sym.sizeDec) + " executed vs " + OF.fmt.size(hit.peak, m.sym.sizeDec) + " shown", ts);
     }
+    sampleHeat(m);
     m.rev++;
     return true;
+  }
+
+  /* ---------- Time & sales: block prints and sweeps ---------- */
+  function recordTape(m, ts, price, size, side, tick) {
+    var tc = m.cfg.tape, blockMin = m.sym.blockMin || m.sym.iceMin || Infinity;
+    var e = { seq: m.tapeSeq++, ts: ts, price: price, size: size, side: side, block: size >= blockMin, sweep: false, ice: false };
+    var run = m.sweep, gap = ts - (run ? run.lastTs : 0);
+    if (run && run.side === side && gap >= 0 && gap <= tc.sweepGapMs) {
+      run.lastTs = ts; run.size += size; run.ticks.add(tick);
+      if (run.entries.length < 60) run.entries.push(e);
+    } else {
+      run = m.sweep = { side: side, lastTs: ts, size: size, ticks: new Set([tick]), entries: [e], flagged: false };
+    }
+    if (run.ticks.size >= tc.sweepLevels) {
+      if (!run.flagged) {
+        run.flagged = true;
+        run.entries.forEach(function (x) { x.sweep = true; });
+        pushAlert(m, "warn", "Aggressive " + (side === "buy" ? "buy" : "sell") + " sweep across " + run.ticks.size + " levels, " +
+          OF.fmt.size(run.size, m.sym.sizeDec) + " at " + OF.fmt.price(price, m.tickSize), ts);
+      }
+      e.sweep = true;
+    }
+    if (e.block) {
+      pushAlert(m, "info", "Block " + side + " print " + OF.fmt.size(size, m.sym.sizeDec) + " at " + OF.fmt.price(price, m.tickSize), ts);
+    }
+    m.tape.push(e);
+    if (m.tape.length > tc.max) m.tape.shift();
+    return e;
+  }
+
+  /* ---------- Initial Balance and Opening Range ---------- */
+  function trackRanges(m, ts, price) {
+    m.ib.add(ts, price);
+    m.orb.add(ts, price);
+    var o = m.orb.get();
+    if (!o || !m.orb.closedAt(ts)) return;
+    var up = price > o.h, down = price < o.l;
+    if (!up && !down) return;
+    var key = "orb:" + o.day + (up ? ":up" : ":down");
+    if (m.alerted.has(key)) return;
+    m.alerted.add(key);
+    pushAlert(m, "warn", "Opening range breakout " + (up ? "above " : "below ") + OF.fmt.price(up ? o.h : o.l, m.tickSize), ts);
+  }
+
+  /* ---------- Liquidity heatmap history ---------- */
+  function heatInterval(m) {
+    var hc = m.cfg.heat;
+    return Math.max(hc.minIntervalMs, Math.round(m.cfg.barMs / hc.colsPerBar));
+  }
+
+  function flat(levels) {
+    var out = [];
+    levels.forEach(function (l) { out.push(l.tick, l.size); });
+    return out;
+  }
+
+  /* Resting size that vanished without trading through it: spoofing or liquidity pulling. */
+  function findPulls(m, prev, t) {
+    var out = [], hc = m.cfg.heat, traded = m.heat.pend.traded, wallMin = m.sym.wallMin;
+    /* Feeds that publish a fixed-depth snapshot drop far levels as price moves; only levels still inside the book count. */
+    var bidLo = Infinity, askHi = -Infinity;
+    m.bids.forEach(function (s, k) { if (k < bidLo) bidLo = k; });
+    m.asks.forEach(function (s, k) { if (k > askHi) askHi = k; });
+    [["b", prev.b, m.bids], ["a", prev.a, m.asks]].forEach(function (d) {
+      for (var i = 0; i < d[1].length; i += 2) {
+        var tick = d[1][i], was = d[1][i + 1], now = d[2].get(tick) || 0;
+        if (was < wallMin || now >= was * hc.pullFrac) continue;
+        if (d[0] === "b" ? tick < bidLo : tick > askHi) continue;
+        if ((traded.get(tick) || 0) >= (was - now) * hc.pullTradedFrac) continue;
+        out.push({ tick: tick, side: d[0], size: was });
+      }
+    });
+    if (out.length && t - m.heat.lastPullAlert >= hc.pullAlertMs) {
+      m.heat.lastPullAlert = t;
+      var top = out.reduce(function (a, b) { return b.size > a.size ? b : a; });
+      pushAlert(m, "info", "Liquidity pulled from the " + (top.side === "b" ? "bid" : "offer") + " at " + OF.fmt.price(top.tick * m.tickSize, m.tickSize) +
+        ": " + OF.fmt.size(top.size, m.sym.sizeDec) + " vanished without trading", t);
+    }
+    return out;
+  }
+
+  function sampleHeat(m) {
+    var h = m.heat, hc = m.cfg.heat, t = m.cfg.heatClock === "wall" ? Date.now() : (m.lastTs || Date.now());
+    if (h.lastT && t - h.lastT < heatInterval(m)) return;
+    if (!m.bids.size && !m.asks.size) return;
+    var prev = h.cols[h.cols.length - 1];
+    var col = { t: t, b: flat(topLevels(m.bids, -1, hc.maxLevels)), a: flat(topLevels(m.asks, 1, hc.maxLevels)),
+      px: h.pend.px, bt: h.pend.big ? h.pend.big.tick : null, bs: h.pend.big ? h.pend.big.size : 0, bside: h.pend.big ? h.pend.big.side : null, pulls: [] };
+    if (prev) col.pulls = findPulls(m, prev, t);
+    h.cols.push(col);
+    if (h.cols.length > hc.maxCols) h.cols.shift();
+    h.lastT = t;
+    h.pend = { px: h.pend.px, big: null, traded: new Map() };
   }
 
   function topLevels(map, dir, n) {
@@ -154,6 +263,7 @@
     m.tracker.sync("a", m.asks);
     refreshBest(m);
     refreshLiquidity(m);
+    sampleHeat(m);
     m.rev++;
   }
 
@@ -163,6 +273,7 @@
     m.tracker.onBookLevel(side, tick, s);
     refreshBest(m);
     refreshLiquidity(m);
+    sampleHeat(m);
     m.rev++;
   }
 

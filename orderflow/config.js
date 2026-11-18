@@ -31,6 +31,20 @@
     ],
     tpoPeriodMs: 1800000,
 
+    /* Sessions in New York minutes-of-day; from > to wraps midnight. */
+    sessions: [
+      { id: "asia", label: "Asia", from: 1080, to: 180, color: "#8b949e" },
+      { id: "london", label: "London", from: 180, to: 570, color: "#d29922" },
+      { id: "ny", label: "NY RTH", from: 570, to: 960, color: "#58a6ff" },
+      { id: "post", label: "Post", from: 960, to: 1080, color: "#6e7681" }
+    ],
+    rthOpenMin: 570, ibMinutes: 60, orbMinutes: 15,
+
+    /* Liquidity heatmap: columns per bar keeps the history span proportional to the timeframe. */
+    heat: { colsPerBar: 24, minIntervalMs: 500, maxCols: 1000, maxLevels: 80, pullFrac: 0.2, pullTradedFrac: 0.3, pullAlertMs: 5000 },
+    tape: { max: 400, rows: 70, sweepGapMs: 60, sweepLevels: 3 },
+    trade: { stopDivisor: 25, targetMultiple: 2, maxLossUsd: 500 },
+
     replay: { speed: 20, speeds: [1, 5, 20, 60], seed: 42, warmupBars: 18, maxWarmupMs: 7200000, tpoPeriodBars: 3 },
 
     /* Live feed. provider is a key of OF.feeds.providers.

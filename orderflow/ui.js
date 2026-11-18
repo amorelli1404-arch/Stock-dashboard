@@ -5,7 +5,7 @@
   "use strict";
   var OF = g.OF;
   if (!OF || typeof document === "undefined") return;
-  var cfg = OF.config, E = OF.engine, R = OF.render, F = OF.fmt, root = document.getElementById("ofRoot");
+  var cfg = OF.config, E = OF.engine, R = OF.render, X = OF.renderExt, T = OF.trading, F = OF.fmt, root = document.getElementById("ofRoot");
   if (!root) return;
 
   function $(id) { return document.getElementById(id); }
@@ -16,9 +16,19 @@
     mode: cfg.defaultMode, symbol: cfg.defaultSymbol, speed: cfg.replay.speed, paused: false, tf: cfg.timeframes[0].ms,
     market: null, feed: null, view: null, drawnRev: -1, dirty: true, lastDraw: 0,
     msgs: 0, lastMsgs: 0, rate: 0, latency: null, errors: 0, noticeTimer: null, lastAlertKey: "", lastStatsRev: -1,
-    ctl: { visibleBars: cfg.visibleBars, hoverX: null, hoverY: null, hoverCanvas: null, profileMode: "volume", tpoPeriod: cfg.replay.tpoPeriodBars }
+    acct: null, startedAt: 0, ladderGeom: null, heatGeom: null,
+    ctl: { visibleBars: cfg.visibleBars, hoverX: null, hoverY: null, hoverCanvas: null, profileMode: "volume", tpoPeriod: cfg.replay.tpoPeriodBars,
+      fpMode: "bidask", showSessions: true, showIB: true, crossT: null, crossTick: null, ladderOffset: 0, acct: null }
   };
-  OF.ui = { app: app };
+  /* Extension points used by ui_terminal.js (tape, execution panel, hotkeys, workspaces). */
+  var hooks = { start: [], trade: [], refresh: [] };
+  OF.ui = { app: app, hooks: hooks, visible: null, notice: null, redraw: null, zoom: null };
+
+  function fire(list, a, b) {
+    list.forEach(function (fn) {
+      try { fn(a, b); } catch (e) { app.errors++; notice("Terminal panel error: " + e.message); }
+    });
+  }
 
   /* ---------- Notices and status ---------- */
   function notice(text) {
@@ -41,7 +51,7 @@
   }
 
   function wire(feed, m) {
-    feed.on("trade", guard(function (e) { E.applyTrade(m, e); }));
+    feed.on("trade", guard(function (e) { if (E.applyTrade(m, e)) fire(hooks.trade, e, m); }));
     feed.on("book", guard(function (e) { E.applyBook(m, e.bids, e.asks); }));
     feed.on("delta", guard(function (e) { E.applyBookDelta(m, e.side, e.price, e.size); }));
     feed.on("quote", guard(function (e) { E.applyQuote(m, e); }));
@@ -55,8 +65,27 @@
 
   function start() {
     stopFeed();
-    var mcfg = Object.assign({}, cfg, { barMs: app.tf });
+    var mcfg = Object.assign({}, cfg, { barMs: app.tf, heatClock: app.mode === "replay" ? "sim" : "wall" });
     app.market = E.create(app.symbol, mcfg);
+    /* Keep the simulated account across timeframe/restart changes so the daily loss lock cannot be reset by
+     * reconnecting. Same instrument: keep everything. Different instrument: carry day P&L and the lock only. */
+    var prev = app.acct;
+    if (prev && prev.sym === app.market.sym) { app.acct = prev; }
+    else {
+      app.acct = T.createAccount(app.market, prev ? { maxLoss: prev.maxLoss } : null);
+      if (prev) {
+        app.acct.realized = prev.realized + (prev.pos ? T.unrealized(prev, app.prevMarket || app.market) : 0);
+        app.acct.locked = prev.locked; app.acct.lockReason = prev.lockReason;
+        if (prev.pos) notice("Simulated position closed when the instrument changed.");
+      }
+    }
+    app.prevMarket = app.market;
+    app.heatGeom = app.ladderGeom = null;
+    app.ctl.acct = app.acct;
+    app.ctl.ladderOffset = 0;
+    app.ctl.crossT = app.ctl.crossTick = null;
+    app.startedAt = Date.now();
+    fire(hooks.start, app.market);
     app.latency = null;
     app.view = null;
     app.dirty = true;
@@ -148,18 +177,47 @@
     app.dirty = true;
   }
 
+  /* Maps a pointer position on any panel to a shared time and price so every panel draws the same crosshair. */
+  function publishCross(name, x, y, w) {
+    var m = app.market, c = app.ctl, v = app.view, barMs = m ? m.cfg.barMs : 0;
+    c.crossT = c.crossTick = null;
+    if (!m) return;
+    if (name === "main" && v) {
+      var i = R.hoverBarIndex(v, x);
+      if (i >= 0) c.crossT = v.bars[i].t + barMs / 2;
+      c.crossTick = R.uAtY(v, y);
+    } else if (name === "cvd" || name === "delta") {
+      var t = X.xToTime(m, c.visibleBars, w, x);
+      if (t != null) c.crossT = Math.floor(t / barMs) * barMs + barMs / 2;
+    } else if (name === "heat" && app.heatGeom) {
+      c.crossT = X.xToTime(m, c.visibleBars, w, x);
+      var g2 = app.heatGeom;
+      c.crossTick = g2.hi + 0.5 - (y - g2.top) / g2.rowPx;
+    } else if (name === "ladder" && app.ladderGeom) {
+      var lg = app.ladderGeom, row = Math.floor((y - lg.headerH) / lg.rowH);
+      if (row >= 0 && row < lg.rows) c.crossTick = lg.topTick - row;
+    }
+  }
+
   function bindCanvas() {
     var main = $("ofMain"), cvd = $("ofCvd");
     function track(canvas, name) {
       canvas.addEventListener("mousemove", function (e) {
-        var r = canvas.getBoundingClientRect();
-        app.ctl.hoverX = e.clientX - r.left; app.ctl.hoverY = e.clientY - r.top; app.ctl.hoverCanvas = name; app.dirty = true;
+        var r = canvas.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+        app.ctl.hoverX = x; app.ctl.hoverY = y; app.ctl.hoverCanvas = name;
+        publishCross(name, x, y, r.width);
+        app.dirty = true;
       });
-      canvas.addEventListener("mouseleave", function () { app.ctl.hoverX = app.ctl.hoverY = app.ctl.hoverCanvas = null; app.dirty = true; });
+      canvas.addEventListener("mouseleave", function () {
+        app.ctl.hoverX = app.ctl.hoverY = app.ctl.hoverCanvas = null; app.ctl.crossT = app.ctl.crossTick = null; app.dirty = true;
+      });
     }
     track(main, "main");
     track(cvd, "cvd");
-    [main, cvd].forEach(function (c) {
+    track($("ofDelta"), "delta");
+    track($("ofHeat"), "heat");
+    track($("ofLadder"), "ladder");
+    [main, cvd, $("ofDelta"), $("ofHeat")].forEach(function (c) {
       c.addEventListener("wheel", function (e) { e.preventDefault(); zoom(e.deltaY > 0 ? 1 : -1); }, { passive: false });
     });
     main.addEventListener("click", function (e) {
@@ -175,12 +233,14 @@
     });
     if (typeof ResizeObserver !== "undefined") {
       var ro = new ResizeObserver(function () { app.dirty = true; });
-      ["ofLadder", "ofMain", "ofCvd", "ofProfile"].forEach(function (id) { ro.observe($(id)); });
+      ["ofLadder", "ofMain", "ofCvd", "ofProfile", "ofHeat", "ofDelta"].forEach(function (id) { ro.observe($(id)); });
     }
   }
 
   /* ---------- Render loop ---------- */
-  function visible() { return root.offsetParent !== null; }
+  /* offsetParent is null for position:fixed roots (maximised mode), so test for rendered boxes instead. */
+  function visible() { return root.getClientRects().length > 0; }
+  function shown(id) { return $(id).getClientRects().length > 0; }
 
   function safeDraw(name, fn) {
     try { return fn(); } catch (e) { app.errors++; notice("Could not draw " + name + ": " + e.message); return null; }
@@ -189,13 +249,21 @@
   function draw() {
     var m = app.market;
     if (!m) return;
-    safeDraw("depth of market", function () { R.drawLadder($("ofLadder"), m, app.ctl); });
-    app.view = safeDraw("footprint chart", function () { return R.drawMain($("ofMain"), m, app.ctl); });
-    safeDraw("CVD", function () { R.drawCVD($("ofCvd"), m, app.ctl); });
-    safeDraw("volume profile", function () { R.drawProfilePanel($("ofProfile"), m, app.ctl); });
+    if (shown("ofLadder")) app.ladderGeom = safeDraw("depth of market", function () { return R.drawLadder($("ofLadder"), m, app.ctl); });
+    if (shown("ofMain")) app.view = safeDraw("footprint chart", function () { return R.drawMain($("ofMain"), m, app.ctl); });
+    if (shown("ofHeat")) app.heatGeom = safeDraw("liquidity heatmap", function () { return X.drawHeat($("ofHeat"), m, app.ctl); });
+    if (shown("ofDelta")) safeDraw("delta", function () { X.drawDelta($("ofDelta"), m, app.ctl); });
+    if (shown("ofCvd")) safeDraw("CVD", function () { R.drawCVD($("ofCvd"), m, app.ctl); });
+    if (shown("ofProfile")) safeDraw("volume profile", function () { R.drawProfilePanel($("ofProfile"), m, app.ctl); });
     app.drawnRev = m.rev;
     app.dirty = false;
   }
+
+  OF.ui.visible = visible;
+  OF.ui.notice = notice;
+  OF.ui.redraw = function () { app.dirty = true; };
+  OF.ui.zoom = zoom;
+  OF.ui.restart = function () { start(); };
 
   function frame(ts) {
     requestAnimationFrame(frame);
@@ -218,7 +286,7 @@
     setText("ofAsk", l1.ask == null ? "—" : F.price(l1.ask, ts) + " x " + F.size(l1.askSize, dec));
     setText("ofSpread", l1.bid != null && l1.ask != null ? F.price(l1.ask - l1.bid, ts) + " (" + Math.round((l1.ask - l1.bid) / ts) + "t)" : "—");
     setText("ofVol", F.size(l1.volume, dec));
-    setText("ofDelta", F.signed(m.delta, dec), "of-val " + (m.delta >= 0 ? "bull" : "bear"));
+    setText("ofDeltaVal", F.signed(m.delta, dec), "of-val " + (m.delta >= 0 ? "bull" : "bear"));
     var vw = m.vwap.value();
     setText("ofVwap", vw == null ? "—" : F.price(vw, ts) + " ±" + F.price(m.vwap.sd(), ts));
     setText("ofRate", app.rate + " msg/s");
@@ -237,6 +305,7 @@
       rows.forEach(function (r) { var row = el("div", "of-stat"); row.appendChild(el("span", "", r[0])); row.appendChild(el("b", "mono", r[1])); box.appendChild(row); });
     }
 
+    fire(hooks.refresh, m);
     var top = m.alerts[0], key = m.alerts.length + ":" + (top ? top.ts + top.text : "");
     if (key !== app.lastAlertKey) {
       app.lastAlertKey = key;

@@ -2,7 +2,9 @@
 
 Dark-mode stock and news analytics dashboard (S&P 500 / Nasdaq 100): Futures Desk, Trade Desk, Trading Terminal, **Order Flow (futures)**, Macro, Fundamentals, Sentiment Engine, Technical & Flow, Story Feed, Event Map.
 
-Open `index.html` in a browser (or serve the folder, e.g. `python -m http.server`). Figures in most panels are illustrative; Buy/Sell is a UI mockup and places no real orders.
+**Live site:** https://amorelli1404-arch.github.io/Stock-dashboard/ (GitHub Pages, served from `main`). Add `?feed=live&symbol=XAUUSDT` to start on real Binance futures data.
+
+Open `index.html` in a browser (or serve the folder, e.g. `python -m http.server`). Figures in most panels are illustrative; Buy/Sell is a UI mockup and places no real orders. The Order Flow terminal's execution is simulated and never reaches a broker.
 
 Trade-history persistence and CSV export rely on the claude.ai Artifact runtime (`window.claude` db/downloads capabilities); outside it the page falls back to local-only demo data and clipboard export.
 
@@ -26,6 +28,18 @@ Two feed modes, toggled in the view:
 |---|---|---|
 | Simulated replay | Seeded simulator (ES, NQ, CL, GC, BTCUSDT, ETHUSDT) | Deterministic per seed, speed 1x to 60x, pause and restart. Prices are illustrative. |
 | Live feed | WebSocket provider | `binance` works out of the box (BTCUSDT, ETHUSDT). Everything else goes through a relay. |
+
+### Terminal layout (full screen, workspaces, hotkeys)
+
+- **Full screen:** the *Full screen* button (or `Shift+F`) maximises the terminal to the whole window and asks the browser for native full screen too. Where the browser blocks that (some embedded frames), it stays maximised in place; use the button to leave.
+- **Workspaces:** *Scalping DOM* (ladder, execution, footprint, delta, tape), *Macro Structure* (footprint, delta, CVD, profile) and *Tape & Heatmap* (heatmap, ladder, delta, tape). Drag the thin bars between columns to resize them (double-click resets). The choice and widths are remembered per browser.
+- **Delta:** a per-bar delta histogram with intrabar max/min wicks and the session total, a *Footprint* cell mode (Bid x Ask, net **Delta** or **Volume** per price), and delta/buy/sell volume on every bar.
+- **Liquidity heatmap:** resting limit-order depth over time behind a price trail. Brighter means larger. An amber x marks size that vanished without trading through it (pulling or spoofing); circles mark large prints. History starts when you connect, because exchanges do not publish past book depth.
+- **Time & sales:** filter by minimum size. Sweeps (fast same-side burst across 3+ levels), block prints and iceberg hits are highlighted and always shown.
+- **Sessions:** Asia, London and NY RTH shading, Initial Balance (first hour of RTH) and a 15 minute Opening Range with a breakout alert. All times are New York time; tunables are in `orderflow/config.js`.
+- **Execution (simulated):** Buy/Sell Mkt, Join Bid/Ask, Flatten All, Reverse, click the ladder's bid or ask column to rest a limit (right-click cancels), a stop/target bracket and a max-daily-loss lockout. Fills are simulated against the book: market orders at the touch, limits when the tape trades through them, no queue position. **Nothing is sent to a broker.**
+- **Hotkeys:** `Shift+B` buy at the ask, `Shift+S` sell at the bid, `Space` recenter the ladder, `Esc` or `Shift+X` flatten, `Shift+F` full screen. In native full screen the browser uses `Esc` to leave first, so use `Shift+X` there. Sound cues (block print, sweep, absorption, pull, fill) are opt-in via the *Sound* button.
+- **Synchronised crosshair:** hovering the footprint, heatmap, delta, CVD or ladder marks the same time and price on the others.
 
 ### Timeframes
 
@@ -68,8 +82,13 @@ orderflow/analytics.js  pure functions: profile, value area, TPO, VWAP, imbalanc
 orderflow/calendar.js   economic calendar, New York time handling, countdown severity
 orderflow/engine.js     market state: bars, volume at price, CVD, VWAP, anchors, book, alerts
 orderflow/feeds.js      SimulatedFeed, reconnecting WebSocketFeed, provider adapters
+orderflow/sessions.js   New York sessions, Initial Balance / Opening Range trackers
+orderflow/trading.js    simulated execution: orders, bracket, P&L, daily loss lock
+orderflow/audio.js      optional Web Audio cues
 orderflow/render.js     canvas renderers (ladder, footprint, CVD, profile)
+orderflow/render_ext.js liquidity heatmap, delta histogram, session levels, position lines, crosshair mapping
 orderflow/ui.js         controls, render loop (requestAnimationFrame, throttled), widgets
+orderflow/ui_terminal.js workspaces, splitters, full screen, execution panel, tape, hotkeys
 tests/orderflow.test.js unit tests
 ```
 
