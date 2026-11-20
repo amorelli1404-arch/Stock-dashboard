@@ -22,6 +22,26 @@ The Event Map view has a **Story map / 3D Globe** switch. The globe is a CesiumJ
 
 Third-party tiles and data (Esri, OpenSeaMap, USGS, NASA EONET, Natural Earth) are used under their free terms with attribution shown on the globe. Check each provider's terms before commercial use.
 
+### Analyst tools (multi-domain OSINT layer)
+
+On top of the globe there is a decision-support layer. Read the data-source notes first, because several feeds cannot be reached keyless from a browser.
+
+| Area | What it does | Data status |
+|---|---|---|
+| Aircraft | Heading trails plus parabolic arcs, regional ADS-B around the camera (airplanes.live, adsb.lol, adsb.fi tried in turn) | Those APIs block browser origins (CORS) in testing, so it falls back to **simulated** traffic between major airports, labelled as such. No military activity is ever simulated. |
+| Vessels | Tankers, container ships and bulk carriers on the shipping lanes, with transponder-gap ("dark vessel") flags | **Simulated.** There is no free keyless live AIS feed. |
+| Satellites | About 150 public-catalog spacecraft (weather, earth observation, imaging, navigation, US-designated), propagated with SGP4 in the browser and moved by the timeline. Select one for its footprint and ground track. | Live orbital elements from a public TLE mirror. The catalog includes some inactive spacecraft. |
+| Next overpass | For any selected place: upcoming low-orbit passes above 10 degrees in 12 h, with countdowns | Computed from the same elements. |
+| GNSS / cyber | GPS jamming reference zones, cable landing stations, internet-outage markers | Zones and landings are **reference data** from public reporting, not live. Outages are live from Georgia Tech IODA (country level). |
+| Cameras | Chokepoint, hub and infrastructure dossiers link to public live-camera searches | Keyless streams cannot be embedded reliably, so these open in a new tab. |
+| Geofences | Draw a circle or polygon (or watch a chokepoint) and get an alert when an event, vessel or aircraft enters. Saved in your browser. | Works on whatever is visible, including simulated layers. |
+| Impact rings | 10 / 50 / 250 / 500 km rings around any event, listing exposed ports, airports, refineries, fabs, power sites, farm belts and data centers, with commodity and asset tags | Hand-curated reference list, not a complete register. |
+| Measure | Distance, bearing, terrain profile and line of sight between two points (earth curvature and refraction included) | Line of sight along one line, not a full viewshed. Needs the 3D terrain basemap for real elevations. |
+| Before / after | Draggable swipe between baseline and current NASA GIBS true-colour imagery, with VIIRS thermal anomalies on the current side | MODIS imagery is coarse (about 250 m). Storm-surge overlays are not included. |
+| Briefing | Structured summary of what is in the current view, the world or a geofence, with CRITICAL / HIGH / ELEVATED / LOW ratings per domain | **Rule-based text, not a language model.** |
+| Import | Drag a GeoJSON, KML, KMZ or CZML file onto the globe (20 MB limit) | Runs locally in your browser. |
+| Share / export | Copy a link that restores camera, layers, basemap, timeline position and selection; export a PNG snapshot or a JSON briefing | Links are validated and range-checked when opened. |
+
 ## Futures Desk (ES / MES / NQ / MNQ)
 
 Default landing view. Everything runs on a client-side simulator (seeded ES/NQ paths, sim clock in ET with 1×/10×/60× speed and restart presets):
@@ -106,6 +126,11 @@ orderflow/ui_terminal.js workspaces, splitters, full screen, execution panel, ta
 globe/data.js           event feed normalisers, geo helpers, market sessions, reference layers
 globe/scene.js          CesiumJS scene: basemaps, markers, arcs, camera, picking
 globe/hud.js            feed drawer, dossier, timeline, command palette
+globe/infra.js          reference datasets: infrastructure, GNSS zones, cable landings
+globe/analytics.js      geofences, exposure, line of sight, rule-based briefing, share state
+globe/intel.js          aircraft, vessels, satellites, outages and reference layers
+globe/tools.js          geofence drawing, measure, rings, before/after, import, export
+globe/panel.js          toolbar, Briefing and Watch tabs, dossier sections
 tests/orderflow.test.js unit tests
 ```
 

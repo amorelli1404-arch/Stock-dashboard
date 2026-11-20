@@ -137,3 +137,42 @@ body.gx-max-open { overflow: hidden; }
   .gx-drawer { width: calc(100% - 24px); bottom: auto; height: 38%; } .gx-bar, .gx-chips, .gx-timeline { left: 50%; max-width: calc(100% - 24px); width: calc(100% - 24px); }
   .gx-chips { display: none; } .gx-dossier { width: calc(100% - 24px); top: 45%; }
 }
+
+/* ---------- Analyst tools ---------- */
+.gx-tabs { display: flex; border-bottom: 1px solid var(--gx-line); }
+.gx-tab { flex: 1; font: inherit; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; background: none; border: none; border-bottom: 2px solid transparent; color: var(--gx-dim); padding: 7px 4px; cursor: pointer; }
+.gx-tab.active { color: var(--gx-acc); border-bottom-color: var(--gx-acc); }
+.gx-pane { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.gx-pane[hidden] { display: none; }
+.gx-brief, .gx-watch { overflow-y: auto; padding: 8px 12px 12px; }
+.gx-brief .gx-tools { padding: 0 0 8px; border: none; }
+.gx-brief-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.gx-brief-head { font-size: 13px; line-height: 1.45; margin: 4px 0 10px; font-weight: 600; }
+.gx-brief-sec { border-top: 1px solid var(--gx-line); padding: 8px 0 2px; }
+.gx-brief-sh { display: flex; align-items: center; justify-content: space-between; font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
+.gx-rate { font-size: 9.5px; font-weight: 800; letter-spacing: 0.07em; padding: 2px 7px; border-radius: 3px; color: #0d1117; }
+.gx-rate.critical { background: #ef5350; } .gx-rate.high { background: #ffa726; } .gx-rate.elevated { background: #ffee58; } .gx-rate.low { background: #26a69a; }
+.gx-row { display: flex; align-items: center; gap: 8px; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--gx-line); font-size: 12px; }
+.gx-row > span:first-child { flex: 1; min-width: 0; }
+.gx-kv-col { flex-direction: column; align-items: stretch; gap: 3px; }
+.gx-kv-head { display: flex; justify-content: space-between; }
+.gx-kv-names { font-size: 11px; color: var(--gx-text); line-height: 1.4; }
+.gx-profile { width: 100%; height: 90px; margin-top: 8px; border: 1px solid var(--gx-line); border-radius: 5px; background: #0d1117; }
+.gx-watch .gx-acts { margin-top: 4px; }
+.gx-watch select { flex: 1; }
+
+.gx-tools2 { top: 104px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; padding: 4px; flex-wrap: wrap; justify-content: center; max-width: calc(100% - 760px); }
+.gx-toast { position: absolute; z-index: 25; top: 150px; left: 50%; transform: translateX(-50%); padding: 9px 14px; font-size: 12.5px; max-width: min(520px, 80%); text-align: center; pointer-events: none; }
+.gx-toast.bad { border-color: #ef5350; color: #ffb4ad; } .gx-toast.good { border-color: #3fb950; }
+a.gx-btn { text-decoration: none; display: inline-block; }
+
+.gx-split { position: absolute; inset: 0; z-index: 12; pointer-events: none; }
+.gx-split-bar { position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; background: #fff; box-shadow: 0 0 8px rgba(0, 0, 0, 0.6); pointer-events: none; }
+.gx-split-handle { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 38px; height: 38px; border-radius: 50%; border: 2px solid #fff; background: rgba(13, 17, 23, 0.9); color: #fff; font-size: 18px; cursor: ew-resize; pointer-events: auto; touch-action: none; }
+.gx-split-l, .gx-split-r { position: absolute; bottom: 110px; padding: 4px 9px; border-radius: 4px; background: rgba(13, 17, 23, 0.85); font-size: 11px; font-weight: 700; font-family: var(--gx-mono); }
+.gx-split-l { left: 360px; } .gx-split-r { right: 16px; }
+.gx-split-close { position: absolute; top: 150px; left: 50%; transform: translateX(-50%); pointer-events: auto; }
+.gx-stage.gx-drop::after { content: "Drop GeoJSON, KML, KMZ or CZML to overlay it"; position: absolute; inset: 12px; z-index: 40; display: flex; align-items: center; justify-content: center; border: 2px dashed var(--gx-acc); border-radius: 10px; background: rgba(13, 17, 23, 0.7); font-size: 16px; pointer-events: none; }
+.gx-stage.gx-cinema .gx-split { display: block; }
+
+@media (max-width: 1250px) { .gx-tools2 { max-width: calc(100% - 380px); left: calc(50% + 170px); } .gx-toast { left: calc(50% + 170px); } }

@@ -13,7 +13,7 @@
   var SPEEDS = [1, 5, 20];
 
   var H = {
-    stage: null, inView: true, booted: false, booting: false, events: [], win: { start: 0, end: 0, id: "24h" }, T: 0, live: true, playing: false, speed: 1,
+    stage: null, inView: true, hooks: [], tabs: {}, booted: false, booting: false, events: [], win: { start: 0, end: 0, id: "24h" }, T: 0, live: true, playing: false, speed: 1,
     q: "", minRank: 1, selected: null, last: 0, lastUi: 0, lastList: 0, listSig: "", scrubbing: false, ui: {}, palette: { open: false, items: [], idx: 0 }, feedStatus: {}
   };
 
@@ -120,7 +120,7 @@
   }
 
   function refToEvent(ref) {
-    if (ref.type === "event") return ref.item;
+    if (ref.type === "event" || ref.type === "generic") return ref.item;
     if (ref.type === "exchange") return exchangeEvent(ref.item);
     if (ref.type === "chokepoint") return { id: "cp-" + ref.item.id, kind: "chokepoint", layer: "supply", title: ref.item.name, lat: ref.item.lat, lon: ref.item.lon, t: H.T, sev: "elevated", desc: ref.item.note, source: "Reference", radiusKm: 60 };
     if (ref.type === "bank") return { id: "cb-" + ref.item.id, kind: "bank", layer: "macro", title: ref.item.name, lat: ref.item.lat, lon: ref.item.lon, t: H.T, sev: "info", desc: ref.item.note, source: "Reference", radiusKm: 0 };
@@ -135,7 +135,7 @@
     if (ev && fly) scene.flyTo(ev.lat, ev.lon, { range: rangeFor(ev), orbit: true });
   }
 
-  function rangeFor(ev) { return Math.max(60000, Math.min(1500000, (ev.radiusKm || 30) * 1000 * 3)); }
+  function rangeFor(ev) { if (ev.flyRange) return ev.flyRange; return Math.max(60000, Math.min(1500000, (ev.radiusKm || 30) * 1000 * 3)); }
 
   /* ---------- Rendering helpers ---------- */
   function badge(sev) {
@@ -208,7 +208,7 @@
   function renderDossier() {
     var d = H.ui.dossier, ev = H.selected;
     d.classList.toggle("open", !!ev);
-    if (!ev) return;
+    if (!ev) { H.hooks.forEach(function (fn) { try { fn(null, null); } catch (e) { /* panel closing */ } }); return; }
     var body = H.ui.dbody;
     body.textContent = "";
     var head = el("div", "gx-dhead");
@@ -251,6 +251,7 @@
     fly.addEventListener("click", function () { scene.flyTo(ev.lat, ev.lon, { range: rangeFor(ev), orbit: false }); });
     orb.addEventListener("click", function () { scene.flyTo(ev.lat, ev.lon, { range: rangeFor(ev), orbit: true }); });
     acts.appendChild(fly); acts.appendChild(orb);
+    H.hooks.forEach(function (fn) { try { fn(ev, body); } catch (e) { body.appendChild(el("p", "gx-note", "Panel error: " + e.message)); } });
     if (ev.storyId != null) {
       var jump = btn("gx-btn", "Open story", "Open the story in the feed");
       jump.addEventListener("click", function () { var a2 = document.querySelector('.mt-link[data-jump="' + ev.storyId + '"]'); if (a2) a2.click(); else document.querySelector('.nav-item[data-view="feed"]').click(); });
@@ -330,6 +331,7 @@
     pop.appendChild(keyRow);
     pop.appendChild(el("p", "gx-note", "With a key, Photorealistic 3D streams Google 3D Tiles. Stored only in this browser."));
     bar.appendChild(pop);
+    H.ui.pop = pop;
     lb.addEventListener("click", function () { pop.classList.toggle("open"); });
     H.ui.note = el("div", "gx-basenote");
     bar.appendChild(H.ui.note);
@@ -375,6 +377,12 @@
     H.ui.count = el("span", "gx-mono gx-dim", "");
     head.appendChild(H.ui.count);
     d.appendChild(head);
+    H.ui.drawer = d;
+    H.ui.tabbar = el("div", "gx-tabs");
+    d.appendChild(H.ui.tabbar);
+    var feedPane = el("div", "gx-pane");
+    addTab("feed", "Feed", feedPane, null);
+    d.appendChild(feedPane);
     var tools = el("div", "gx-tools"), q = document.createElement("input"), sev = document.createElement("select");
     q.type = "search"; q.placeholder = "Filter events"; q.setAttribute("aria-label", "Filter events");
     q.addEventListener("input", function () { H.q = q.value.trim().toLowerCase(); scene.refresh(); H.listSig = ""; renderFeed(); });
@@ -382,14 +390,37 @@
     sev.setAttribute("aria-label", "Minimum severity");
     sev.addEventListener("change", function () { H.minRank = Number(sev.value); scene.refresh(); H.listSig = ""; renderFeed(); });
     tools.appendChild(q); tools.appendChild(sev);
-    d.appendChild(tools);
+    feedPane.appendChild(tools);
     H.ui.list = el("div", "gx-list");
     H.ui.list.setAttribute("role", "list");
-    d.appendChild(H.ui.list);
+    feedPane.appendChild(H.ui.list);
+    showTab("feed");
     var collapse = btn("gx-collapse", "‹", "Collapse the feed");
     collapse.addEventListener("click", function () { d.classList.toggle("collapsed"); collapse.textContent = d.classList.contains("collapsed") ? "›" : "‹"; });
     d.appendChild(collapse);
     return d;
+  }
+
+  /* Drawer tabs: other modules register panes (briefing, watchlist) through GX.hud.addTab. */
+  function addTab(id, label, pane, onShow) {
+    var b = btn("gx-tab", label, label);
+    b.addEventListener("click", function () { showTab(id); });
+    H.ui.tabbar.appendChild(b);
+    H.tabs[id] = { btn: b, pane: pane, onShow: onShow };
+    if (id !== "feed") { pane.classList.add("gx-pane"); pane.hidden = true; H.ui.drawer.appendChild(pane); }
+  }
+
+  function showTab(id) {
+    H.activeTab = id;
+    Object.keys(H.tabs).forEach(function (k) { var t = H.tabs[k]; t.pane.hidden = k !== id; t.btn.classList.toggle("active", k === id); });
+    if (H.tabs[id].onShow) H.tabs[id].onShow();
+  }
+
+  function toast(text, kind) {
+    if (!H.stage) return;
+    var t = el("div", "gx-panel gx-toast " + (kind || ""), text);
+    H.stage.appendChild(t);
+    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 5200);
   }
 
   function buildDossier() {
@@ -490,6 +521,12 @@
     }
   });
 
+  /* Re-reads the layer checkboxes from the scene, e.g. after a shared link changes them. */
+  function syncLayers() {
+    var boxes = H.ui.pop ? H.ui.pop.querySelectorAll("input[type=checkbox]") : [];
+    GX.LAYERS.forEach(function (l, i) { if (boxes[i]) boxes[i].checked = scene.isLayerOn(l.id); });
+  }
+
   function applyBasemap(id) {
     H.ui.baseBtns.forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-base") === id); });
     H.ui.note.textContent = "Loading " + GX.BASEMAPS[id].label + "…";
@@ -531,6 +568,13 @@
     var canvas = build(host);
     scene.boot(canvas).then(function (r) {
       H.booted = true; H.booting = false;
+      GX.hud = {
+        stage: function () { return H.stage; }, visibleEvents: visibleEvents, selected: function () { return H.selected; }, selectEvent: selectEvent, toast: toast,
+        onDossier: function (fn) { H.hooks.push(fn); }, addTab: addTab, showTab: showTab, openPalette: openPalette, refreshDossier: renderDossier,
+        syncLayers: syncLayers, timeMs: function () { return H.T; }, windowId: function () { return H.win.id; }, setWindow: setWindow, setBasemap: applyBasemap, events: function () { return H.events; },
+        setTime: function (ms) { H.live = false; H.playing = false; setT(ms); scene.refresh(); syncTimeline(true); }, refToEvent: refToEvent
+      };
+      (GX.onBoot || []).forEach(function (fn) { try { fn(GX.hud); } catch (e) { toast("Module failed to start: " + e.message, "bad"); } });
       H.ui.loading.hidden = true;
       H.ui.baseBtns.forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-base") === "photo"); });
       H.ui.note.textContent = r.note || "";
@@ -539,7 +583,7 @@
       H.last = performance.now();
       setWindow("24h");
       bindKeys();
-      loadFeeds();
+      loadFeeds().then(function () { (GX.onFeeds || []).forEach(function (fn) { try { fn(GX.hud); } catch (e) { /* module failed */ } }); });
       if (typeof IntersectionObserver !== "undefined") {
         new IntersectionObserver(function (es) { H.inView = es[0].isIntersecting && es[0].intersectionRatio >= 0.25; }, { threshold: [0, 0.25, 0.5] }).observe(H.stage);
       }
@@ -561,6 +605,10 @@
   function init() {
     var classic = document.getElementById("mapClassic"), wrap = document.getElementById("gxWrap");
     if (!classic || !wrap) return;
+    if (/[#&]gx=/.test(location.hash)) {
+      /* A shared link opens straight into the globe. */
+      setTimeout(function () { var nav = document.querySelector('.nav-item[data-view="map"]'); if (nav) nav.click(); var gb = document.querySelector('[data-map-mode="globe"]'); if (gb) gb.click(); }, 0);
+    }
     document.querySelectorAll("[data-map-mode]").forEach(function (b) {
       b.addEventListener("click", function () {
         var globe = b.getAttribute("data-map-mode") === "globe";

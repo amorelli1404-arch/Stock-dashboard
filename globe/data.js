@@ -25,7 +25,14 @@
     { id: "air", label: "Flight Corridors", color: "#C9D1D9" },
     { id: "cables", label: "Undersea Cables", color: "#79C0FF" },
     { id: "markets", label: "Market Hubs", color: "#3FB950" },
-    { id: "borders", label: "Country Borders", color: "#8B949E" }
+    { id: "borders", label: "Country Borders", color: "#8B949E" },
+    { id: "aircraft", label: "Aircraft (ADS-B)", color: "#E6EDF3", off: true },
+    { id: "vessels", label: "Vessels (AIS, simulated)", color: "#56D4DD" },
+    { id: "sats", label: "Satellites", color: "#D2A8FF" },
+    { id: "gnss", label: "GNSS interference zones", color: "#FF7B72" },
+    { id: "landings", label: "Cable landing stations", color: "#79C0FF" },
+    { id: "outages", label: "Internet outages", color: "#FFA657", off: true },
+    { id: "infra", label: "Infrastructure reference", color: "#F2CC60", off: true }
   ];
 
   /* ---------- Severity ---------- */

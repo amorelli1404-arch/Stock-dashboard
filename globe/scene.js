@@ -29,7 +29,8 @@
     orbit: null, selected: null, impact: null, onPick: null, onFrame: null, frames: 0, fps: 0, fpsStamp: 0, bordersLoaded: false
   };
 
-  GX.LAYERS.forEach(function (l) { S.layerOn[l.id] = l.id !== "air"; });
+  S.pickFns = []; S.frameFns = []; S.layerFns = [];
+  GX.LAYERS.forEach(function (l) { S.layerOn[l.id] = !l.off && l.id !== "air"; });
 
   /* ---------- Loading ---------- */
   function loadCesium() {
@@ -217,6 +218,7 @@
   function setLayer(id, on) {
     S.layerOn[id] = on;
     if (S.ds[id]) S.ds[id].show = on;
+    S.layerFns.forEach(function (fn) { fn(id, on); });
     if (id === "borders" && on && S.ready) loadBorders();
     refresh();
   }
@@ -326,8 +328,9 @@
   function bindInput() {
     var h = new C.ScreenSpaceEventHandler(V.scene.canvas), canvas = V.scene.canvas, last = 0;
     h.setInputAction(function (e) {
+      if (S.pickBlocked) return;
       var picked = V.scene.pick(e.position), id = picked && picked.id, ref = id && (id.gx || (id.id && id.id.gx));
-      if (ref && S.onPick) S.onPick(ref);
+      if (ref) S.pickFns.forEach(function (fn) { fn(ref); });
     }, C.ScreenSpaceEventType.LEFT_CLICK);
     h.setInputAction(function (e) {
       var now = performance.now();
@@ -356,7 +359,7 @@
       S.ready = true;
       setTime(Date.now());
       Object.keys(S.ds).forEach(function (id) { S.ds[id].show = !!S.layerOn[id]; });
-      V.scene.preRender.addEventListener(function () { tickOrbit(); if (S.onFrame) S.onFrame(); });
+      V.scene.preRender.addEventListener(function () { tickOrbit(); S.frameFns.forEach(function (fn) { fn(); }); });
       V.scene.postRender.addEventListener(function () {
         S.frames++;
         var now = performance.now();
@@ -371,8 +374,20 @@
 
   GX.scene = {
     boot: boot, setBasemap: setBasemap, setEvents: setEvents, setLayer: setLayer, setPredicate: setPredicate, refresh: refresh, setTime: setTime,
-    sampleElevation: sampleElevation, flyTo: flyTo, viewHome: viewHome, stopOrbit: stopOrbit, select: select, getTime: function () { return S.timeMs; },
-    onPick: function (fn) { S.onPick = fn; }, onFrame: function (fn) { S.onFrame = fn; },
+    blockPicking: function (on) { S.pickBlocked = !!on; }, sampleElevation: sampleElevation, flyTo: flyTo, viewHome: viewHome, stopOrbit: stopOrbit, select: select, getTime: function () { return S.timeMs; },
+    onPick: function (fn) { S.pickFns.push(fn); }, onFrame: function (fn) { S.frameFns.push(fn); }, onLayer: function (fn) { S.layerFns.push(fn); },
+    /* Escape hatch for the telemetry and tool modules, which share this viewer. */
+    ctx: function () { return { C: C, V: V, S: S, addE: addE, dataSource: dataSource, color: color, pos: pos }; },
+    /* Visible bounds in degrees, or null when the whole globe is in view. */
+    viewRect: function () {
+      var r = V && V.camera.computeViewRectangle(V.scene.globe.ellipsoid);
+      return r ? { west: C.Math.toDegrees(r.west), south: C.Math.toDegrees(r.south), east: C.Math.toDegrees(r.east), north: C.Math.toDegrees(r.north) } : null;
+    },
+    setCamera: function (st) {
+      stopOrbit();
+      V.camera.setView({ destination: pos(st.lon, st.lat, st.alt), orientation: { heading: C.Math.toRadians(st.h || 0), pitch: C.Math.toRadians(st.p == null ? -90 : st.p), roll: 0 } });
+    },
+    canvasEl: function () { return V.scene.canvas; }, renderNow: function () { V.scene.render(); },
     fps: function () { return S.fps; }, isLayerOn: function (id) { return !!S.layerOn[id]; },
     setRendering: function (on) { if (V) V.useDefaultRenderLoop = !!on; },
     cameraInfo: function () {
