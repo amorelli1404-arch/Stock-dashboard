@@ -50,6 +50,14 @@
   function color(css, a) { var c = C.Color.fromCssColorString(css); return a == null ? c : c.withAlpha(a); }
   function pos(lon, lat, h) { return C.Cartesian3.fromDegrees(lon, lat, h || 0); }
   function sevColor(sev, a) { return color(GX.SEV[sev].color, a); }
+  /* Entity ignores unknown constructor options, so the lookup tag has to be attached after creation for picking to find it. */
+  function addE(collection, opts) {
+    var tag = opts.gx;
+    delete opts.gx;
+    var e = collection.add(opts);
+    if (tag) e.gx = tag;
+    return e;
+  }
   function dataSource(id) { var d = new C.CustomDataSource(id); V.dataSources.add(d); S.ds[id] = d; return d; }
 
   /* ---------- Viewer ---------- */
@@ -125,10 +133,10 @@
     GX.SHIP_ARCS.forEach(function (a, i) {
       var pts = GX.greatCircle(a.from[0], a.from[1], a.to[0], a.to[1], 90, a.peakM);
       var flat = []; pts.forEach(function (p) { flat.push(p.lon, p.lat, p.h); });
-      supply.entities.add({ polyline: { positions: C.Cartesian3.fromDegreesArrayHeights(flat), width: 3, material: new C.PolylineGlowMaterialProperty({ glowPower: 0.22, color: color("#2DD4BF", 0.85) }) }, gx: { type: "route", name: a.name } });
+      addE(supply.entities, { polyline: { positions: C.Cartesian3.fromDegreesArrayHeights(flat), width: 3, material: new C.PolylineGlowMaterialProperty({ glowPower: 0.22, color: color("#2DD4BF", 0.85) }) }, gx: { type: "route", name: a.name } });
       for (var k = 0; k < 3; k++) {
         (function (offset) {
-          supply.entities.add({ position: new C.CallbackProperty(function () {
+          addE(supply.entities, { position: new C.CallbackProperty(function () {
             var ph = ((performance.now() / 14000) + offset + i * 0.13) % 1, p = pts[Math.min(pts.length - 1, Math.floor(ph * (pts.length - 1)))];
             return pos(p.lon, p.lat, p.h);
           }, false), point: { pixelSize: 6, color: color("#E6FFFB"), outlineColor: color("#2DD4BF", 0.6), outlineWidth: 3 }, gx: { type: "route", name: a.name } });
@@ -136,7 +144,7 @@
       }
     });
     GX.CHOKEPOINTS.forEach(function (c) {
-      supply.entities.add({ position: pos(c.lon, c.lat, 0), point: { pixelSize: 9, color: color("#FFA726"), outlineColor: color("#000", 0.6), outlineWidth: 1 },
+      addE(supply.entities, { position: pos(c.lon, c.lat, 0), point: { pixelSize: 9, color: color("#FFA726"), outlineColor: color("#000", 0.6), outlineWidth: 1 },
         label: { text: c.name.toUpperCase(), font: "600 11px JetBrains Mono, monospace", fillColor: color("#FFE0B2"), outlineColor: color("#000"), outlineWidth: 3, style: C.LabelStyle.FILL_AND_OUTLINE,
           pixelOffset: new C.Cartesian2(0, -16), distanceDisplayCondition: new C.DistanceDisplayCondition(0, 1.6e7) }, gx: { type: "chokepoint", item: c } });
     });
@@ -144,18 +152,18 @@
     var air = dataSource("air");
     GX.AIR_CORRIDORS.forEach(function (a) {
       var flat = []; a.pts.forEach(function (p) { flat.push(p[0], p[1], 0); });
-      air.entities.add({ polyline: { positions: C.Cartesian3.fromDegreesArrayHeights(flat), width: 9, arcType: C.ArcType.GEODESIC, material: color("#C9D1D9", 0.16) }, gx: { type: "route", name: a.name } });
+      addE(air.entities, { polyline: { positions: C.Cartesian3.fromDegreesArrayHeights(flat), width: 9, arcType: C.ArcType.GEODESIC, material: color("#C9D1D9", 0.16) }, gx: { type: "route", name: a.name } });
     });
 
     var cables = dataSource("cables");
     GX.CABLES.forEach(function (a) {
       var flat = []; a.pts.forEach(function (p) { flat.push(p[0], p[1], 0); });
-      cables.entities.add({ polyline: { positions: C.Cartesian3.fromDegreesArrayHeights(flat), width: 2, arcType: C.ArcType.GEODESIC, material: new C.PolylineDashMaterialProperty({ color: color("#79C0FF", 0.85), dashLength: 14 }) }, gx: { type: "route", name: a.name } });
+      addE(cables.entities, { polyline: { positions: C.Cartesian3.fromDegreesArrayHeights(flat), width: 2, arcType: C.ArcType.GEODESIC, material: new C.PolylineDashMaterialProperty({ color: color("#79C0FF", 0.85), dashLength: 14 }) }, gx: { type: "route", name: a.name } });
     });
 
     var macro = dataSource("macro");
     GX.CENTRAL_BANKS.forEach(function (b) {
-      macro.entities.add({ position: pos(b.lon, b.lat, 0), point: { pixelSize: 8, color: color("#58A6FF"), outlineColor: color("#fff", 0.7), outlineWidth: 1 },
+      addE(macro.entities, { position: pos(b.lon, b.lat, 0), point: { pixelSize: 8, color: color("#58A6FF"), outlineColor: color("#fff", 0.7), outlineWidth: 1 },
         label: { text: b.name, font: "600 10px JetBrains Mono, monospace", fillColor: color("#CFE4FF"), outlineColor: color("#000"), outlineWidth: 3, style: C.LabelStyle.FILL_AND_OUTLINE,
           pixelOffset: new C.Cartesian2(0, -14), distanceDisplayCondition: new C.DistanceDisplayCondition(0, 6e6) }, gx: { type: "bank", item: b } });
     });
@@ -164,7 +172,7 @@
     GX.EXCHANGES.forEach(function (ex) {
       function st() { return S.exStatus[ex.id] || { state: "closed", local: "--:--" }; }
       var palette = { open: "#3FB950", pre: "#FFEE58", closed: "#6E7681" };
-      mk.entities.add({ position: pos(ex.lon, ex.lat, 0),
+      addE(mk.entities, { position: pos(ex.lon, ex.lat, 0),
         point: { pixelSize: 11, color: new C.CallbackProperty(function () { return color(palette[st().state]); }, false), outlineColor: color("#fff", 0.8), outlineWidth: 1 },
         label: { text: new C.CallbackProperty(function () { return ex.name + "  " + st().state.toUpperCase() + "  " + st().local; }, false), font: "600 11px JetBrains Mono, monospace", fillColor: color("#fff"),
           outlineColor: color("#000"), outlineWidth: 3, style: C.LabelStyle.FILL_AND_OUTLINE, pixelOffset: new C.Cartesian2(0, -18), distanceDisplayCondition: new C.DistanceDisplayCondition(0, 2.2e7) },
@@ -226,10 +234,10 @@
     ds.entities.removeAll();
     cand.forEach(function (ev, i) {
       var rank = GX.SEV[ev.sev].rank, h = 90000 + rank * 70000, col = GX.SEV[ev.sev].color, r = Math.max(40000, Math.min(450000, ev.radiusKm * 1000 * 0.6));
-      ds.entities.add({ polyline: { positions: [pos(ev.lon, ev.lat, 0), pos(ev.lon, ev.lat, h)], width: 3, material: new C.PolylineGlowMaterialProperty({ glowPower: 0.3, color: color(col, 0.9) }) }, gx: { type: "event", item: ev } });
+      addE(ds.entities, { polyline: { positions: [pos(ev.lon, ev.lat, 0), pos(ev.lon, ev.lat, h)], width: 3, material: new C.PolylineGlowMaterialProperty({ glowPower: 0.3, color: color(col, 0.9) }) }, gx: { type: "event", item: ev } });
       var off = i * 370;
       function ph() { return ((performance.now() + off) % RING_PERIOD_MS) / RING_PERIOD_MS; }
-      ds.entities.add({ position: pos(ev.lon, ev.lat, 0), gx: { type: "event", item: ev }, ellipse: {
+      addE(ds.entities, { position: pos(ev.lon, ev.lat, 0), gx: { type: "event", item: ev }, ellipse: {
         semiMajorAxis: new C.CallbackProperty(function () { return 8000 + r * ph(); }, false), semiMinorAxis: new C.CallbackProperty(function () { return 8000 + r * ph(); }, false),
         material: new C.ColorMaterialProperty(new C.CallbackProperty(function () { return color(col, 0.42 * (1 - ph())); }, false)), outline: true,
         outlineColor: new C.CallbackProperty(function () { return color(col, 0.9 * (1 - ph())); }, false), height: 0 } });
@@ -245,11 +253,11 @@
     ds.entities.removeAll();
     storms.forEach(function (ev) {
       var flat = []; ev.track.forEach(function (p) { flat.push(p.lon, p.lat, 4000); });
-      if (ev.track.length > 1) ds.entities.add({ polyline: { positions: C.Cartesian3.fromDegreesArrayHeights(flat), width: 3, material: new C.PolylineGlowMaterialProperty({ glowPower: 0.2, color: color("#A371F7", 0.9) }) }, gx: { type: "event", item: ev } });
+      if (ev.track.length > 1) addE(ds.entities, { polyline: { positions: C.Cartesian3.fromDegreesArrayHeights(flat), width: 3, material: new C.PolylineGlowMaterialProperty({ glowPower: 0.2, color: color("#A371F7", 0.9) }) }, gx: { type: "event", item: ev } });
       var cone = GX.stormCone(ev.track, 72, 12);
       if (cone) {
         var ring = []; cone.forEach(function (p) { ring.push(p.lon, p.lat); });
-        ds.entities.add({ polygon: { hierarchy: C.Cartesian3.fromDegreesArray(ring), material: color("#A371F7", 0.16), outline: true, outlineColor: color("#A371F7", 0.7), height: 0 }, gx: { type: "event", item: ev } });
+        addE(ds.entities, { polygon: { hierarchy: C.Cartesian3.fromDegreesArray(ring), material: color("#A371F7", 0.16), outline: true, outlineColor: color("#A371F7", 0.7), height: 0 }, gx: { type: "event", item: ev } });
       }
     });
   }
@@ -312,7 +320,7 @@
     if (S.impact) { V.entities.remove(S.impact); S.impact = null; }
     if (!ev) return;
     var r = Math.max(8000, (ev.radiusKm || 20) * 1000), col = GX.SEV[ev.sev].color;
-    S.impact = V.entities.add({ position: pos(ev.lon, ev.lat, 0), ellipse: { semiMajorAxis: r, semiMinorAxis: r, material: color(col, 0.14), outline: true, outlineColor: color(col, 0.95), outlineWidth: 2, height: 0 } });
+    S.impact = addE(V.entities, { position: pos(ev.lon, ev.lat, 0), ellipse: { semiMajorAxis: r, semiMinorAxis: r, material: color(col, 0.14), outline: true, outlineColor: color(col, 0.95), outlineWidth: 2, height: 0 } });
   }
 
   function bindInput() {
@@ -341,6 +349,8 @@
   function boot(container) {
     return loadCesium().then(function (cesium) {
       C = cesium;
+      /* A failed earlier attempt may have left a half-built viewer behind. */
+      if (V && !S.ready) { try { V.destroy(); } catch (e) { /* already gone */ } V = null; S.ds = {}; S.points = null; S.pointByEv.clear(); S.bordersLoaded = false; S.beaconSig = S.stormSig = ""; }
       createViewer(container);
       buildRoutes();
       S.ready = true;

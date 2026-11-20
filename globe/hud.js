@@ -13,7 +13,7 @@
   var SPEEDS = [1, 5, 20];
 
   var H = {
-    stage: null, booted: false, booting: false, events: [], win: { start: 0, end: 0, id: "24h" }, T: 0, live: true, playing: false, speed: 1,
+    stage: null, inView: true, booted: false, booting: false, events: [], win: { start: 0, end: 0, id: "24h" }, T: 0, live: true, playing: false, speed: 1,
     q: "", minRank: 1, selected: null, last: 0, lastUi: 0, lastList: 0, listSig: "", scrubbing: false, ui: {}, palette: { open: false, items: [], idx: 0 }, feedStatus: {}
   };
 
@@ -22,7 +22,9 @@
   function pad(n) { return String(n).padStart(2, "0"); }
   function utc(ms) { var d = new Date(ms); return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()) + " " + pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes()) + ":" + pad(d.getUTCSeconds()) + " UTC"; }
   function typing(t) { var tag = t && t.tagName; return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t && t.isContentEditable); }
-  function visible() { return !!H.stage && H.stage.getClientRects().length > 0 && !document.hidden; }
+  /* On screen means laid out, the tab is visible and enough of the globe is in the viewport. */
+  function visible() { return !!H.stage && H.stage.getClientRects().length > 0 && !document.hidden && H.inView; }
+  function modalOpen() { var m = document.getElementById("modalBackdrop"); return !!m && m.classList.contains("open"); }
 
   /* ---------- Data ---------- */
   function storyEvents(now) {
@@ -49,12 +51,12 @@
   }
 
   function loadFeeds() {
-    var now = Date.now(), parts = { quakes: [], eonet: [] };
-    var jobs = [
-      fetchJson(USGS_URL).then(function (j) { parts.quakes = GX.normalizeUsgs(j); H.feedStatus.usgs = "ok"; }, function (e) { H.feedStatus.usgs = "failed (" + e.message + ")"; }),
-      fetchJson(EONET_URL).then(function (j) { parts.eonet = GX.normalizeEonet(j); H.feedStatus.eonet = "ok"; }, function (e) { H.feedStatus.eonet = "failed (" + e.message + ")"; })
-    ];
-    return Promise.all(jobs).then(function () {
+    var now = Date.now(), parts = H.parts || (H.parts = { quakes: [], eonet: [] });
+    /* A failed or malformed refresh keeps that source's previous events instead of wiping them. */
+    function job(url, key, name, normalize) {
+      return fetchJson(url).then(function (j) { parts[key] = normalize(j); H.feedStatus[name] = "ok"; }).catch(function (e) { H.feedStatus[name] = "failed (" + e.message + ")"; });
+    }
+    return Promise.all([job(USGS_URL, "quakes", "usgs", GX.normalizeUsgs), job(EONET_URL, "eonet", "eonet", GX.normalizeEonet)]).then(function () {
       H.events = [].concat(parts.quakes, parts.eonet, storyEvents(now), calendarEvents(now));
       scene.setEvents(H.events);
       H.listSig = "";
@@ -347,6 +349,7 @@
     pal.addEventListener("click", openPalette);
     home.addEventListener("click", function () { scene.viewHome(); });
     hide.addEventListener("click", function () { setCinema(true); });
+    H.ui.fullBtn = full;
     full.addEventListener("click", function () { toggleMax(full); });
     [pal, home, hide, full].forEach(function (b) { r3.appendChild(b); });
     wrap.appendChild(r3);
@@ -446,6 +449,7 @@
     var p = el("div", "gx-palette"), card = el("div", "gx-panel gx-pcard"), inp = document.createElement("input");
     inp.type = "text"; inp.placeholder = "Jump to a city, exchange, event or coordinates"; inp.setAttribute("aria-label", "Command palette"); inp.autocomplete = "off";
     inp.addEventListener("input", function () { H.palette.idx = 0; renderPalette(); });
+    p.addEventListener("keydown", function (e) { if (e.key === "Escape") { closePalette(); e.stopPropagation(); } });
     inp.addEventListener("keydown", function (e) {
       if (e.key === "ArrowDown") { H.palette.idx = Math.min(H.palette.items.length - 1, H.palette.idx + 1); renderPalette(); e.preventDefault(); }
       else if (e.key === "ArrowUp") { H.palette.idx = Math.max(0, H.palette.idx - 1); renderPalette(); e.preventDefault(); }
@@ -473,6 +477,13 @@
     if (!on && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () { /* already out */ });
   }
 
+  function exitMax() {
+    if (!H.stage || !H.stage.classList.contains("gx-max")) return;
+    H.stage.classList.remove("gx-max"); document.body.classList.remove("gx-max-open");
+    if (H.ui.fullBtn) H.ui.fullBtn.textContent = "Full screen";
+    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () { /* already out */ });
+  }
+
   document.addEventListener("fullscreenchange", function () {
     if (!document.fullscreenElement && H.stage && H.stage.classList.contains("gx-max")) {
       H.stage.classList.remove("gx-max"); document.body.classList.remove("gx-max-open");
@@ -489,13 +500,13 @@
   function bindKeys() {
     /* Capture phase so the globe owns Ctrl+K and "/" while it is on screen, instead of the app search box. */
     document.addEventListener("keydown", function (e) {
-      if (!visible()) return;
+      if (!visible() || modalOpen()) return;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); e.stopImmediatePropagation(); H.palette.open ? closePalette() : openPalette(); return; }
       if (typing(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === "/") { e.preventDefault(); e.stopImmediatePropagation(); openPalette(); }
       else if (e.key === "h" || e.key === "H") { setCinema(!H.stage.classList.contains("gx-cinema")); }
       else if (e.code === "Space" && !/^(BUTTON|A)$/.test(e.target.tagName)) { e.preventDefault(); H.live = false; if (H.T >= H.win.end) H.T = H.win.start; H.playing = !H.playing; syncTimeline(false); }
-      else if (e.key === "Escape") { if (H.selected) { selectEvent(null, false); scene.stopOrbit(); } else if (H.stage.classList.contains("gx-cinema")) setCinema(false); }
+      else if (e.key === "Escape") { if (H.selected) { selectEvent(null, false); scene.stopOrbit(); } else if (H.stage.classList.contains("gx-cinema")) setCinema(false); else exitMax(); }
     }, true);
   }
 
@@ -529,9 +540,15 @@
       setWindow("24h");
       bindKeys();
       loadFeeds();
-      setInterval(loadFeeds, REFRESH_FEED_MS);
-      /* Stop rendering while the globe is off screen so it costs nothing in other views. */
-      setInterval(function () { scene.setRendering(visible()); }, 500);
+      if (typeof IntersectionObserver !== "undefined") {
+        new IntersectionObserver(function (es) { H.inView = es[0].isIntersecting && es[0].intersectionRatio >= 0.25; }, { threshold: [0, 0.25, 0.5] }).observe(H.stage);
+      }
+      /* Feeds only refresh while the globe is on screen; rendering stops when it is not. */
+      setInterval(function () { if (visible()) loadFeeds(); }, REFRESH_FEED_MS);
+      setInterval(function () {
+        scene.setRendering(visible());
+        if (H.stage && H.stage.getClientRects().length === 0) exitMax();
+      }, 500);
     }, function (e) {
       H.booting = false;
       H.ui.loading.textContent = "The 3D globe could not start: " + e.message;
@@ -548,6 +565,7 @@
       b.addEventListener("click", function () {
         var globe = b.getAttribute("data-map-mode") === "globe";
         document.querySelectorAll("[data-map-mode]").forEach(function (x) { x.classList.toggle("active", x === b); });
+        if (!globe) exitMax();
         classic.hidden = globe; wrap.hidden = !globe;
         if (globe) boot(wrap);
       });
