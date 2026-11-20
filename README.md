@@ -8,6 +8,20 @@ Open `index.html` in a browser (or serve the folder, e.g. `python -m http.server
 
 Trade-history persistence and CSV export rely on the claude.ai Artifact runtime (`window.claude` db/downloads capabilities); outside it the page falls back to local-only demo data and clipboard export.
 
+## Event Map: 3D Globe
+
+The Event Map view has a **Story map / 3D Globe** switch. The globe is a CesiumJS scene (loaded on demand from jsDelivr, so the rest of the app stays light) with a command-center HUD:
+
+- **Basemaps:** Photorealistic 3D, Dark Tactical, Terrain Elevation, Maritime & Airspace. With no key, Photorealistic 3D falls back to Esri satellite imagery on real 3D terrain (Esri world elevation). Paste an optional Google Map Tiles API key under *Layers* to stream Google Photorealistic 3D Tiles; the key stays in your browser's local storage.
+- **Lighting:** the day/night terminator and atmosphere follow the timeline clock, so scrubbing time moves the shadow line.
+- **Live data (no keys):** USGS earthquakes (past 30 days, scaled by magnitude, with an indicative impact radius) and NASA EONET wildfires, volcanoes and storms. Storms show their observed track plus an *illustrative* extrapolated cone, which is not an official forecast. Feeds refresh every 5 minutes.
+- **Layers:** macro/geopolitical (the Story map pins, high-impact US releases from the calendar, central banks), shipping chokepoints with animated great-circle arcs, flight corridors, undersea cables and market hubs with live session status (NYSE, CME Globex, LSE, Eurex, TSE, HKEX). Chokepoints, arcs, corridors and cables are approximate reference data, not live vessel or flight tracking. Exchange status models weekends and lunch breaks but not holidays.
+- **HUD:** filterable live feed with *Fly to*, an event dossier (coordinates, sampled elevation, magnitude/depth/wind, impact ring, headlines, rule-based market sensitivity tags), a time scrubber (24H, 7D, 30D, or replay from a date) with play/pause at 1x/5x/20x, and a command palette (`Ctrl+K` or `/`) for cities, exchanges, events or coordinates.
+- **Controls:** drag to pan, `Shift`+drag to tilt, `Ctrl`+drag to tilt and rotate, wheel to zoom. `H` toggles Cinema mode (hides the HUD), `Space` plays/pauses the timeline, `Esc` closes the dossier.
+- **Performance:** markers are batched point primitives with distance scaling; pillars and shockwave rings are limited to the 36 most severe or freshest events; rendering stops while the globe is off screen.
+
+Third-party tiles and data (Esri, OpenSeaMap, USGS, NASA EONET, Natural Earth) are used under their free terms with attribution shown on the globe. Check each provider's terms before commercial use.
+
 ## Futures Desk (ES / MES / NQ / MNQ)
 
 Default landing view. Everything runs on a client-side simulator (seeded ES/NQ paths, sim clock in ET with 1×/10×/60× speed and restart presets):
@@ -89,6 +103,9 @@ orderflow/render.js     canvas renderers (ladder, footprint, CVD, profile)
 orderflow/render_ext.js liquidity heatmap, delta histogram, session levels, position lines, crosshair mapping
 orderflow/ui.js         controls, render loop (requestAnimationFrame, throttled), widgets
 orderflow/ui_terminal.js workspaces, splitters, full screen, execution panel, tape, hotkeys
+globe/data.js           event feed normalisers, geo helpers, market sessions, reference layers
+globe/scene.js          CesiumJS scene: basemaps, markers, arcs, camera, picking
+globe/hud.js            feed drawer, dossier, timeline, command palette
 tests/orderflow.test.js unit tests
 ```
 
