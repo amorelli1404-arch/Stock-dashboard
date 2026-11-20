@@ -147,6 +147,7 @@
 
   function drawProfile(canvas, m) {
     var ctx = canvas.getContext("2d"), w = canvas.width, h = canvas.height, hs = m.heights, lo = Math.min(m.minH, 0), hi = Math.max(m.maxH, 10), n = hs.length;
+    if (n < 2) return;
     ctx.clearRect(0, 0, w, h);
     function y(v) { return h - 6 - (v - lo) / (hi - lo) * (h - 14); }
     ctx.fillStyle = "rgba(121,192,255,0.25)"; ctx.strokeStyle = "#79C0FF"; ctx.lineWidth = 1.5;
@@ -233,6 +234,7 @@
       if (!GX.intel.hasSats()) { out.textContent = "Turn on the Satellites layer first and wait for orbital data to load."; return; }
       out.textContent = "Computing…";
       GX.intel.overpasses(ev.lat, ev.lon, function (list) {
+        if (hud.selected() !== ev) return;
         out.textContent = "";
         if (!list || !list.length) { out.appendChild(el("p", "gx-empty", "No passes above 10° elevation in the next 12 hours.")); return; }
         clearInterval(passTimer);

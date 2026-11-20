@@ -6,9 +6,10 @@
   if (!GX || typeof document === "undefined") return;
   (GX.onBoot = GX.onBoot || []).push(init);
 
-  var FENCE_KEY = "indexwatch.globe.fences", MAX_FENCES = 12, MAX_ALERTS = 60, CHECK_MS = 2000, PROFILE_N = 64, RING_KM = [10, 50, 250, 500], MAX_IMPORT_BYTES = 20 * 1024 * 1024, DAY = 86400000;
+  var FENCE_KEY = "indexwatch.globe.fences", MAX_FENCES = 12, MAX_ALERTS = 60, MAX_TOASTS = 3, MAX_FEATURES = 5000, CHECK_MS = 2000, PROFILE_N = 64, RING_KM = [10, 50, 250, 500], MAX_IMPORT_BYTES = 20 * 1024 * 1024, DAY = 86400000;
   var GIBS = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/";
   var T = (GX.tools = { fences: [], alerts: [], imports: [], mode: null, measure: null, listeners: { alert: [], fences: [], measure: [], mode: [] } });
+  var measureToken = 0, importQueue = Promise.resolve();
   var X, C, V, hud, fenceDs, ringDs, measureEnts = [], draft = [], draftEnts = [], handler, split = null, splitUi = null, ringsAt = null;
 
   function emit(k, a) { T.listeners[k].forEach(function (fn) { try { fn(a); } catch (e) { /* listener failed */ } }); }
@@ -104,32 +105,35 @@
   }
 
   /* quiet: record who is already inside without raising alerts (used when a fence is created or restored). */
+  /* An alert needs a real transition: the item was in the list and outside last check, and is inside now. Items that merely
+   * appear (layer switched on, timeline scrubbed, feed loaded) only set the baseline. */
   function checkFences(quiet) {
     if (!T.fences.length) return;
-    var list = items();
+    var list = items(), toasts = 0, extra = 0;
     T.fences.forEach(function (f) {
-      var inside = new Set();
-      list.forEach(function (it) { if (GX.inFence(f, it.lat, it.lon)) inside.add(it.key); });
-      if (!quiet && f.inside) {
-        list.forEach(function (it) {
-          if (inside.has(it.key) && !f.inside.has(it.key)) {
-            var a = { t: Date.now(), fence: f.name, text: it.label + " entered " + f.name, kind: it.kind };
-            T.alerts.unshift(a);
-            if (T.alerts.length > MAX_ALERTS) T.alerts.pop();
-            hud.toast("Geofence alert: " + a.text, "bad");
-            emit("alert", a);
-          }
-        });
-      }
-      f.inside = inside;
-      f.count = inside.size;
+      var prev = f.state || new Map(), next = new Map(), count = 0;
+      list.forEach(function (it) {
+        var inside = GX.inFence(f, it.lat, it.lon);
+        next.set(it.key, inside);
+        if (inside) count++;
+        if (!quiet && inside && prev.get(it.key) === false) {
+          var a = { t: Date.now(), fence: f.name, text: it.label + " entered " + f.name, kind: it.kind };
+          T.alerts.unshift(a);
+          if (T.alerts.length > MAX_ALERTS) T.alerts.pop();
+          if (toasts < MAX_TOASTS) { hud.toast("Geofence alert: " + a.text, "bad"); toasts++; } else extra++;
+          emit("alert", a);
+        }
+      });
+      f.state = next;
+      f.count = count;
     });
+    if (extra) hud.toast("+" + extra + " more geofence alerts. See the Watch tab.", "bad");
   }
 
   /* ---------- Measure ---------- */
   T.startMeasure = function () { T.clearMeasure(); setMode({ kind: "measure" }); hud.toast("Click point A, then point B. Esc cancels.", ""); };
 
-  T.clearMeasure = function () { measureEnts.forEach(function (e) { V.entities.remove(e); }); measureEnts = []; T.measure = null; emit("measure", null); };
+  T.clearMeasure = function () { measureToken++; measureEnts.forEach(function (e) { V.entities.remove(e); }); measureEnts = []; T.measure = null; emit("measure", null); };
 
   function sampleTerrain(a, b) {
     var pts = GX.greatCircle(a.lon, a.lat, b.lon, b.lat, PROFILE_N - 1, 0);
@@ -141,8 +145,10 @@
 
   function finishMeasure(a, b) {
     setMode(null);
-    var dist = GX.haversineKm(a.lat, a.lon, b.lat, b.lon), brg = GX.bearing(a.lat, a.lon, b.lat, b.lon);
+    var dist = GX.haversineKm(a.lat, a.lon, b.lat, b.lon), brg = GX.bearing(a.lat, a.lon, b.lat, b.lon), token = ++measureToken;
+    if (dist < 0.05) { hud.toast("Both points are the same. Pick two different points.", "bad"); return; }
     sampleTerrain(a, b).then(function (s) {
+      if (token !== measureToken) return;
       var los = GX.losProfile(s.heights, dist, 10, 10), col = los.visible ? "#3FB950" : "#EF5350";
       T.measure = { a: a, b: b, distKm: dist, bearing: brg, heights: s.heights, terrain: s.terrain, los: los, minH: Math.min.apply(null, s.heights), maxH: Math.max.apply(null, s.heights) };
       measureEnts.push(V.entities.add({ polyline: { positions: C.Cartesian3.fromDegreesArray([a.lon, a.lat, b.lon, b.lat]), width: 3, arcType: C.ArcType.GEODESIC, material: new C.PolylineDashMaterialProperty({ color: X.color(col), dashLength: 14 }), clampToGround: false } }));
@@ -186,7 +192,7 @@
 
   T.stopCompare = function () {
     if (!split) return;
-    split.layers.forEach(function (l) { V.imageryLayers.remove(l, true); });
+    split.layers.forEach(function (l) { try { V.imageryLayers.remove(l, true); } catch (e) { /* already removed with the basemap */ } });
     V.scene.splitPosition = 0;
     split = null;
     if (splitUi) { splitUi.parentNode.removeChild(splitUi); splitUi = null; }
@@ -211,27 +217,39 @@
     handle.addEventListener("pointerdown", function (e) { dragging = true; handle.setPointerCapture(e.pointerId); e.preventDefault(); });
     handle.addEventListener("pointermove", move);
     handle.addEventListener("pointerup", function () { dragging = false; });
+    handle.addEventListener("pointercancel", function () { dragging = false; });
     stage.appendChild(box);
     splitUi = box;
   }
 
   /* ---------- Import ---------- */
+  /* Imports run one at a time so several dropped files cannot parse together and freeze the page. */
   T.importFile = function (file) {
+    var run = importQueue.then(function () { return importOne(file); });
+    importQueue = run.catch(function () { /* keep the queue alive */ });
+    return run;
+  };
+
+  function importOne(file) {
     var name = file.name || "layer", ext = (name.split(".").pop() || "").toLowerCase();
     if (file.size > MAX_IMPORT_BYTES) return Promise.reject(new Error(name + " is larger than 20 MB"));
     var load;
     if (ext === "kml" || ext === "kmz") load = C.KmlDataSource.load(file, { camera: V.scene.camera, canvas: V.scene.canvas });
     else if (ext === "czml") load = file.text().then(function (t) { return C.CzmlDataSource.load(JSON.parse(t)); });
-    else if (ext === "geojson" || ext === "json") load = file.text().then(function (t) { return C.GeoJsonDataSource.load(JSON.parse(t), { stroke: X.color("#79C0FF"), fill: X.color("#79C0FF", 0.25), strokeWidth: 2 }); });
+    else if (ext === "geojson" || ext === "json") load = file.text().then(function (t) {
+      var j = JSON.parse(t), n = j.features ? j.features.length : 1;
+      if (n > MAX_FEATURES) throw new Error(name + " has " + n + " features (limit " + MAX_FEATURES + ")");
+      return C.GeoJsonDataSource.load(j, { stroke: X.color("#79C0FF"), fill: X.color("#79C0FF", 0.25), strokeWidth: 2 }); });
     else return Promise.reject(new Error(name + ": unsupported type (use GeoJSON, KML, KMZ or CZML)"));
     return load.then(function (ds) {
+      if (ds.entities.values.length > MAX_FEATURES) throw new Error(name + " has " + ds.entities.values.length + " features (limit " + MAX_FEATURES + ")");
       V.dataSources.add(ds);
       var rec = { id: nid(), name: name, ds: ds, count: ds.entities.values.length };
       T.imports.push(rec);
       emit("fences", T.fences);
       return rec;
     });
-  };
+  }
   T.removeImport = function (id) { var r = T.imports.filter(function (x) { return x.id === id; })[0]; if (r) { V.dataSources.remove(r.ds, true); T.imports = T.imports.filter(function (x) { return x.id !== id; }); emit("fences", T.fences); } };
   T.zoomImport = function (id) { var r = T.imports.filter(function (x) { return x.id === id; })[0]; if (r) V.flyTo(r.ds); };
 
@@ -334,7 +352,9 @@
     }, C.ScreenSpaceEventType.LEFT_CLICK);
     handler.setInputAction(function () { if (T.mode && T.mode.kind === "fence" && T.mode.type === "polygon") { draft.pop(); finishPolygon(); } }, C.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
     document.addEventListener("keydown", function (e) {
-      if (!T.mode) return;
+      if (!T.mode || !hud.stage() || !hud.stage().getClientRects().length) return;
+      var tag = e.target && e.target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (e.target && e.target.isContentEditable)) return;
       if (e.key === "Escape") { setMode(null); e.stopPropagation(); }
       else if (e.key === "Enter" && T.mode.kind === "fence" && T.mode.type === "polygon") { finishPolygon(); e.preventDefault(); }
     }, true);
@@ -346,6 +366,9 @@
     ringDs = new C.CustomDataSource("rings"); V.dataSources.add(ringDs);
     loadFences(); renderFences();
     bindInput(); bindDrop();
+    /* Drawing modes must not outlive the globe being hidden. */
+    setInterval(function () { if (T.mode && hud.stage() && !hud.stage().getClientRects().length) setMode(null); }, 1000);
+    GX.scene.onBasemap(T.stopCompare);
     var last = 0, first = true;
     GX.scene.onFrame(function () {
       var now = performance.now();

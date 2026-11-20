@@ -8,6 +8,7 @@
   (GX.onBoot = GX.onBoot || []).push(init);
 
   var SAT_LIB = "https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js";
+  var SAT_SRI = "sha384-e6V1JVpc+kVNTxT0gEOla7yL4c92Romsw7itPoipfzHbEjzUwPhTv6oeVDMHHzqT";
   var TLE_API = "https://tle.ivanstanojevic.me/api/tle?page-size=60&search=";
   var SAT_QUERIES = [["NOAA", "Weather"], ["METOP", "Weather"], ["GOES", "Weather"], ["SENTINEL", "Earth observation"], ["LANDSAT", "Earth observation"], ["WORLDVIEW", "Imaging"], ["USA", "US government (public catalog)"], ["GPS", "Navigation"], ["ISS", "Space station"]];
   var ADSB = ["https://api.airplanes.live/v2/point/", "https://api.adsb.lol/v2/point/", "https://opendata.adsb.fi/api/v2/lat/"];
@@ -207,7 +208,7 @@
     if (satLib) return satLib;
     satLib = new Promise(function (resolve, reject) {
       var s = document.createElement("script");
-      s.src = SAT_LIB; s.onload = function () { g.satellite ? resolve(g.satellite) : reject(new Error("satellite.js missing")); };
+      s.src = SAT_LIB; s.integrity = SAT_SRI; s.crossOrigin = "anonymous"; s.onload = function () { g.satellite ? resolve(g.satellite) : reject(new Error("satellite.js missing")); };
       s.onerror = function () { satLib = null; reject(new Error("could not load satellite.js")); };
       document.head.appendChild(s);
     });

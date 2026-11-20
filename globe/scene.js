@@ -29,7 +29,7 @@
     orbit: null, selected: null, impact: null, onPick: null, onFrame: null, frames: 0, fps: 0, fpsStamp: 0, bordersLoaded: false
   };
 
-  S.pickFns = []; S.frameFns = []; S.layerFns = [];
+  S.pickFns = []; S.frameFns = []; S.layerFns = []; S.baseFns = [];
   GX.LAYERS.forEach(function (l) { S.layerOn[l.id] = !l.off && l.id !== "air"; });
 
   /* ---------- Loading ---------- */
@@ -80,6 +80,8 @@
     ctl.tiltEventTypes = [T.MIDDLE_DRAG, T.PINCH, { eventType: T.LEFT_DRAG, modifier: C.KeyboardEventModifier.SHIFT }, { eventType: T.LEFT_DRAG, modifier: C.KeyboardEventModifier.CTRL }];
     ctl.zoomEventTypes = [T.WHEEL, T.PINCH, T.RIGHT_DRAG];
     V.cesiumWidget.creditContainer.classList.add("gx-credits");
+    /* Cesium's default double-click tracks the picked entity, which fights the polygon geofence gesture. */
+    V.screenSpaceEventHandler.removeInputAction(C.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
   }
 
   /* ---------- Basemaps ---------- */
@@ -107,6 +109,7 @@
   /* Resolves to {mode, note}. Photorealistic 3D needs a Google Map Tiles API key; without one it falls back to satellite imagery. */
   function setBasemap(id) {
     var def = BASEMAPS[id] || BASEMAPS.photo;
+    S.baseFns.forEach(function (fn) { fn(); });
     S.basemap = id;
     V.imageryLayers.removeAll();
     removeTileset();
@@ -337,6 +340,7 @@
       if (now - last < 60) return;
       last = now;
       var picked = V.scene.pick(e.endPosition), id = picked && picked.id;
+      if (S.pickBlocked) return;
       canvas.style.cursor = id && (id.gx || (id.id && id.id.gx)) ? "pointer" : "";
     }, C.ScreenSpaceEventType.MOUSE_MOVE);
     ["pointerdown", "wheel", "touchstart"].forEach(function (n) { canvas.addEventListener(n, stopOrbit, { passive: true }); });
@@ -375,7 +379,7 @@
   GX.scene = {
     boot: boot, setBasemap: setBasemap, setEvents: setEvents, setLayer: setLayer, setPredicate: setPredicate, refresh: refresh, setTime: setTime,
     blockPicking: function (on) { S.pickBlocked = !!on; }, sampleElevation: sampleElevation, flyTo: flyTo, viewHome: viewHome, stopOrbit: stopOrbit, select: select, getTime: function () { return S.timeMs; },
-    onPick: function (fn) { S.pickFns.push(fn); }, onFrame: function (fn) { S.frameFns.push(fn); }, onLayer: function (fn) { S.layerFns.push(fn); },
+    onPick: function (fn) { S.pickFns.push(fn); }, onFrame: function (fn) { S.frameFns.push(fn); }, onLayer: function (fn) { S.layerFns.push(fn); }, onBasemap: function (fn) { S.baseFns.push(fn); },
     /* Escape hatch for the telemetry and tool modules, which share this viewer. */
     ctx: function () { return { C: C, V: V, S: S, addE: addE, dataSource: dataSource, color: color, pos: pos }; },
     /* Visible bounds in degrees, or null when the whole globe is in view. */
