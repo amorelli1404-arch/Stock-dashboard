@@ -1,6 +1,6 @@
 # Index Watch
 
-Dark-mode stock and news analytics dashboard (S&P 500 / Nasdaq 100): Futures Desk, Trade Desk, Trading Terminal, **Order Flow (futures)**, Macro, Fundamentals, Sentiment Engine, Technical & Flow, Story Feed, Event Map.
+Dark-mode stock and news analytics dashboard (S&P 500 / Nasdaq-100): order-flow Futures Desk, Trade Desk, Trading Terminal, **Order Flow (futures)**, Macro, Fundamentals, Sentiment Engine, Technical & Flow, Story Feed, Event Map.
 
 **Live site:** https://amorelli1404-arch.github.io/Stock-dashboard/ (GitHub Pages, served from `main`). Add `?feed=live&symbol=XAUUSDT` to start on real Binance futures data.
 
@@ -42,15 +42,48 @@ On top of the globe there is a decision-support layer. Read the data-source note
 | Import | Drag a GeoJSON, KML, KMZ or CZML file onto the globe (20 MB limit) | Runs locally in your browser. |
 | Share / export | Copy a link that restores camera, layers, basemap, timeline position and selection; export a PNG snapshot or a JSON briefing | Links are validated and range-checked when opened. |
 
-## Futures Desk (ES / MES / NQ / MNQ)
+## Futures Desk (MNQ / NQ / MES / ES)
 
-Default landing view. Everything runs on a client-side simulator (seeded ES/NQ paths, sim clock in ET with 1×/10×/60× speed and restart presets):
+The landing view is an order-flow desk. It has no stock or fundamentals content.
 
-- **Profile** - RTH and ETH volume profiles with VAH/VAL/POC; Initial Balance box with 1.5× / 2× extensions.
-- **Intermarket** - NQ/ES ratio mini-chart, $TNX/VIX/DXY strip with TNX-vs-NQ correlation alerts, Mag 7 heatmap with weighted NQ-point impact.
-- **Order flow & catalysts** - CVD sub-pane with price/CVD divergence marks; USD red-folder countdown (FOMC, CPI, NFP, PPI, Fed Chair) with a High Volatility Warning inside 15 minutes.
-- **Risk** - CME tick engine (ES $12.50, MES $1.25, NQ $5.00, MNQ $0.50 per tick) and a prop-firm guard (daily loss limit + trailing drawdown) that caps contract size so one stop-out can't breach the rules.
-- **Levels** - PDH/PDL/PDC, ONH/ONL, RTH open, and a 5/15/30-minute Opening Range box + matrix.
+| Panel | What it shows |
+|---|---|
+| Footprint | Bid x ask volume per price per bar, diagonal imbalances (ask at p against bid at p-1, bid at p against ask at p+1; default 300%), stacked imbalances (3+ in a row) marked `STK`, point of control outlined per bar, a thin OHLC candle per column, delta and volume under each bar. Rows auto-fit the latest bars. Drag to pan, wheel to zoom rows, Ctrl+wheel to widen columns, Shift+wheel to scroll back, double-click or *Re-center* to reset. |
+| Cumulative delta | CVD line and a per-bar delta histogram, aligned to the footprint bars. |
+| DOM | 25 levels each side: bid size, price, ask size, session volume at price, delta at price. Last traded row highlighted, large resting size in the accent colour, and a flash when size is pulled or stacked. |
+| Time & sales | Last 100 prints coloured by aggressor. Prints at or above the large-print threshold are bold. A minimum-size filter hides small prints (large prints always show). |
+| Session profile | Volume histogram with POC, VAH and VAL (70% value area) and VWAP. |
+| Stats | Last, change, session volume and delta, buy %, big-print count, POC, VAH, VAL, VWAP. |
+| Alerts | Checked when each bar closes: stacked imbalances, absorption (heavy volume, price within 2 ticks), delta divergence (new high or low with opposite-sign delta) and large prints. |
+
+Controls: contract (MNQ, NQ, MES, ES), bar interval (15s, 30s, 1m, 5m), imbalance ratio, large-print threshold, tape minimum size, pause/resume, simulator speed (1x, 5x, 20x). Settings are saved in your browser. Changing the contract or bar interval starts a fresh session.
+
+The badge next to the title is always honest: **SIM** while the simulator runs, and **LIVE** only when a relay socket is open and data is actually arriving. Other states are shown as they are (connecting, waiting for data, no data, offline, paused).
+
+### Connect your own data relay
+
+Choose **Source: Relay**, paste a WebSocket address (`ws://` or `wss://`) and press **Connect**. The page connects directly, so keep any vendor API key on your relay and never in this page. After the socket opens it sends `{"action":"subscribe","symbol":"MNQ"}` (ignore it if your relay does not need it). It reconnects automatically with backoff.
+
+Each frame is one JSON object or an array of objects:
+
+```json
+{ "type": "trade", "ts": 1795000000123, "price": 23118.75, "size": 3, "side": "buy" }
+{ "type": "book",  "bids": [[23118.5, 40], [23118.25, 55]], "asks": [[23118.75, 38], [23119.0, 61]] }
+```
+
+- `ts` is epoch milliseconds (epoch seconds are also accepted and converted).
+- `side` is the **aggressor**: `buy` lifted the offer, `sell` hit the bid. If it is missing the desk infers it from the book.
+- `book` is a full snapshot of the best levels on each side, best first or in any order. The desk uses up to 60 levels per side and draws 25.
+- Other message types are ignored. Malformed messages are counted and skipped, never fatal.
+- Prices are rounded to the contract's 0.25 tick.
+
+`relay/databento_relay.py --mock` (see below) produces this format for a quick test: use `ws://127.0.0.1:8765/stream?symbol=ES`.
+
+### Data and limits
+
+- The simulator is deterministic per contract: tick-accurate prices, lognormal trade sizes with occasional bursts, alternating trending and ranging regimes, and a book that refreshes around the touch. It is for practice and layout checking, not a market model.
+- The desk keeps at most 600 bars, 200 prints and 100 alerts in memory, so a two-hour session does not grow.
+- "Market closed" is shown for a relay that goes quiet during the weekend or the daily 17:00 to 18:00 ET break. Exchange holidays are not modelled.
 
 ## Order Flow view
 
@@ -123,6 +156,10 @@ orderflow/render.js     canvas renderers (ladder, footprint, CVD, profile)
 orderflow/render_ext.js liquidity heatmap, delta histogram, session levels, position lines, crosshair mapping
 orderflow/ui.js         controls, render loop (requestAnimationFrame, throttled), widgets
 orderflow/ui_terminal.js workspaces, splitters, full screen, execution panel, tape, hotkeys
+futures/engine.js       Futures Desk: contracts, footprint bars, imbalance and bar-close detectors
+futures/feed.js         Futures Desk: simulator, relay WebSocket connector, honest status
+futures/render.js       Futures Desk canvases: footprint, CVD, DOM, profile
+futures/ui.js           Futures Desk controls, tape, alerts, stats, settings
 globe/data.js           event feed normalisers, geo helpers, market sessions, reference layers
 globe/scene.js          CesiumJS scene: basemaps, markers, arcs, camera, picking
 globe/hud.js            feed drawer, dossier, timeline, command palette
