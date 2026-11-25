@@ -42,6 +42,18 @@ On top of the globe there is a decision-support layer. Read the data-source note
 | Import | Drag a GeoJSON, KML, KMZ or CZML file onto the globe (20 MB limit) | Runs locally in your browser. |
 | Share / export | Copy a link that restores camera, layers, basemap, timeline position and selection; export a PNG snapshot or a JSON briefing | Links are validated and range-checked when opened. |
 
+## Story Feed: Globe / Bias card
+
+The top of the Story Feed has a live card: trading-session clock, a headline carousel and a **Daily Bias** list for NQ, ES, GC and EURUSD. Tap a row for the full read.
+
+- **Sessions:** Tokyo 01:00-05:00, London 07:00-10:00 and New York 14:30-21:00 UTC, shown in your local time, with a live "opens in" or "closes in" countdown. Weekends are skipped.
+- **Headlines:** the latest investingLive stories (via rss2json), refreshed every 2 minutes, rotating every 8 seconds with swipe and dots. Stories with market-moving keywords (tariff, escalation, plunge, FOMC, CPI and similar) get the red ALERT pill, others show NEWS. Tap a headline to open the story.
+- **Daily bias:** a score from -100 to +100, rebuilt from live prices every 4 seconds and from 5-minute candles every minute. It is a transparent rule, not a forecast: today's move since 00:00 UTC (50%), position in today's range (30%) and 1-hour momentum (20%), each scaled by a typical daily move for that market. Above +20 is Bullish, below -20 is Bearish, otherwise Neutral. The subtitle gives the day type (Trend day, Range day or Balanced) and whether the read is Set or still Forming.
+- **Full read:** the sheet shows each component of the score, today's open, high, low and range, and the latest related headlines.
+- **Status you can trust:** the badge says LIVE only while prices are arriving (under 15 seconds old). It shows DELAYED, CONNECTING or OFFLINE otherwise, and the card only polls while it is on screen.
+
+Data limits: there is no keyless index-futures feed that browsers can reach, so prices come from Binance. **NQ is priced through the QQQ perpetual and ES through the SPY perpetual** (marked with a small tag), gold through the XAU perpetual and EURUSD through EUR/USDT spot. Levels therefore differ from the futures contracts, and "today" means since 00:00 UTC rather than the exchange session. Headlines depend on the free rss2json service and its caching.
+
 ## Futures Desk (MNQ / NQ / MES / ES)
 
 The landing view is an order-flow desk. It has no stock or fundamentals content.
@@ -160,6 +172,8 @@ futures/engine.js       Futures Desk: contracts, footprint bars, imbalance and b
 futures/feed.js         Futures Desk: simulator, relay WebSocket connector, honest status
 futures/render.js       Futures Desk canvases: footprint, CVD, DOM, profile
 futures/ui.js           Futures Desk controls, tape, alerts, stats, settings
+bias/bias.js            Globe / Bias: scoring, sessions, headline parsing
+bias/live.js            Globe / Bias: live polling and the card UI
 globe/data.js           event feed normalisers, geo helpers, market sessions, reference layers
 globe/scene.js          CesiumJS scene: basemaps, markers, arcs, camera, picking
 globe/hud.js            feed drawer, dossier, timeline, command palette

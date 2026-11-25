@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="orderflow/orderflow.css">
 <link rel="stylesheet" href="globe/globe.css">
 <link rel="stylesheet" href="futures/futures.css">
+<link rel="stylesheet" href="bias/bias.css">
 <style>
   /* ============ Tokens ============ */
   :root {
@@ -1344,6 +1345,32 @@
         <div class="page-head">
           <div><h1 class="page-title">Story Feed</h1><p class="page-dek">Every story in full, with sourcing and the reasoning behind each market read.</p></div>
         </div>
+        <div class="gb-layout">
+          <aside class="gb" id="gbRoot" aria-label="Globe and daily bias">
+            <header class="gb-head">
+              <span class="gb-globe" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><defs><linearGradient id="gbG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4cc9f0"/><stop offset="1" stop-color="#3a7bd5"/></linearGradient></defs><circle cx="12" cy="12" r="10.5" fill="url(#gbG)"/><path d="M5 9c3-3 6 0 8-2s4-1 6 1M4 14c3 1 4 4 7 3s3 3 6 1" fill="none" stroke="#3ddba0" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+              <span class="gb-title">GLOBE / BIAS</span>
+              <span class="gb-spacer"></span>
+              <span class="gb-live wait" id="gbLive" role="status"><i></i><b id="gbLiveText">CONNECTING</b></span>
+              <span class="gb-clock mono" id="gbClock">00:00</span>
+            </header>
+            <div class="gb-sessions" id="gbSessions"></div>
+            <div class="gb-alert plain" id="gbAlert">
+              <div class="gb-alert-top"><span class="gb-pill neutral" id="gbPill">NEWS</span><span class="gb-src mono" id="gbSrc">investingLive</span></div>
+              <a class="gb-headline" id="gbHead">Waiting for the latest headline.</a>
+              <div class="gb-dots" id="gbDots"></div>
+            </div>
+            <section class="gb-bias" aria-label="Daily bias">
+              <div class="gb-bias-head"><h3>DAILY BIAS</h3><span>tap one for the full read</span></div>
+              <div class="gb-rows" id="gbRows"></div>
+            </section>
+            <p class="gb-foot" id="gbFoot"></p>
+            <p class="gb-note">Prices come from Binance perpetuals (QQQ, SPY, gold) and EUR/USDT spot, so NQ and ES are priced through their ETF proxies. Headlines: investingLive. Session times are shown in your local time. The bias is a rule-based read, not investment advice.</p>
+          </aside>
+          <div class="gb-sheet" id="gbSheet" hidden role="dialog" aria-modal="true" aria-label="Full read">
+            <div class="gb-sheet-panel"><button type="button" class="gb-x" id="gbSheetClose" aria-label="Close">&times;</button><div id="gbSheetBody"></div></div>
+          </div>
+          <div class="gb-main">
         <nav class="feed-filters" id="feedFilters">
           <button class="chip active" data-filter="all">All stories</button>
           <button class="chip" data-filter="sp500">S&amp;P 500-tilted</button>
@@ -1366,6 +1393,8 @@
           <div class="outlook-tally" id="outlookTally"></div>
           <p class="outlook-narrative" id="outlookNarrative"></p>
           <p class="outlook-disclaimer">Synthesized by weighing each story's Nasdaq-100 read above — a qualitative summary of today's headlines, not investment advice.</p>
+        </div>
+          </div>
         </div>
       </section>
 
@@ -2904,6 +2933,8 @@
 <script src="futures/feed.js"></script>
 <script src="futures/render.js"></script>
 <script src="futures/ui.js"></script>
+<script src="bias/bias.js"></script>
+<script src="bias/live.js"></script>
 <script src="globe/data.js"></script>
 <script src="globe/scene.js"></script>
 <script src="globe/infra.js"></script>
