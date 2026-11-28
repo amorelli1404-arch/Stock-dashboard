@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="futures/futures.css">
 <link rel="stylesheet" href="bias/bias.css">
 <link rel="stylesheet" href="ix/ix.css">
+<link rel="stylesheet" href="news/news.css">
 <style>
   /* ============ Tokens ============ */
   /* Colour tokens live in theme-terminal.css; these are the fallbacks used before it loads. */
@@ -1510,7 +1511,17 @@
       <!-- ============ EVENT MAP ============ -->
       <section class="view" data-view="map">
         <div class="page-head">
-          <div><h1 class="page-title">Event Map</h1><p class="page-dek">Where today's stories are happening — pins mark real locations named in the story feed, not a comprehensive conflict/incident database.</p></div>
+          <div><h1 class="page-title">Event Map</h1><p class="page-dek">Live world headlines and disaster alerts, placed at the location each headline names. Updates every 30 minutes. Placement is automatic and can be wrong.</p></div>
+        </div>
+        <div class="news-bar" role="status">
+          <b>LIVE EVENTS</b>
+          <span class="mono" id="newsUpdated">Not updated yet</span>
+          <button type="button" id="newsRefresh">Refresh now</button>
+          <button type="button" class="active" data-news-filter="all">All</button>
+          <button type="button" data-news-filter="news">News</button>
+          <button type="button" data-news-filter="disaster">Disasters</button>
+          <span class="news-spacer"></span>
+          <span class="news-sources" id="newsSources"></span>
         </div>
         <div class="map-modes" role="group" aria-label="Map mode">
           <button type="button" class="active" data-map-mode="story">Story map</button>
@@ -1529,7 +1540,7 @@
             <div class="map-tooltip" id="mapTooltip"></div>
           </div>
           <div class="map-legend">
-            <span class="map-legend-item"><span class="map-legend-dot"></span>Event location — click a pin for details</span>
+            <span class="map-legend-item"><span class="map-legend-dot"></span>Red critical · orange conflict or severe · yellow notable or minor alert · white other · white ring is a GDACS disaster alert · pulsing is under 3 hours old</span>
             <span class="map-legend-item" id="mapPinCount"></span>
           </div>
         </div>
@@ -1688,14 +1699,6 @@
       ] }
   ];
 
-  var EVENT_PINS = [
-    { id: 1, lon: 51.42, lat: 35.69, loc: "Tehran, Iran", storyIds: [1], desc: "Bessent launches 'Operation Economic Outcast' — nearly 60 Iran-linked entities sanctioned." },
-    { id: 2, lon: 56.25, lat: 26.57, loc: "Strait of Hormuz", storyIds: [1], desc: "Sec. of War Hegseth: not ruling out military force here 'or anywhere else.'" },
-    { id: 3, lon: -77.04, lat: 38.91, loc: "Washington, D.C.", storyIds: [1, 2], desc: "Treasury's Iran sanctions wave, and Druckenmiller/Citadel's pushback on Bessent's bond buybacks." },
-    { id: 4, lon: -75.70, lat: 45.42, loc: "Ottawa, Canada", storyIds: [3], desc: "Trump threatens 50% tariffs on Canadian autos and steel for 2027." },
-    { id: 5, lon: 116.41, lat: 39.90, loc: "Beijing, China", storyIds: [3], desc: "US eyes 7.5% overcapacity tariffs on China ahead of Xi-Trump talks." },
-    { id: 6, lon: 126.98, lat: 37.57, loc: "Seoul, South Korea", storyIds: [4], desc: "Samsung crash triggers semi-sector selling ahead of Nvidia's earnings." }
-  ];
 
   var NASDAQ_OUTLOOK_NARRATIVE = "The Nasdaq-100 picture has turned more concretely bearish than yesterday's wait-and-see setup, driven by two specific, immediate forces rather than vague caution. First, Samsung's crash triggered real semi-sector selling Monday — landing right before Nvidia's earnings, the single most consequential print for the index this quarter, which raises the stakes of a soft print considerably. Second, the tech-outflow rotation that started last week accelerated rather than faded: $6.4 billion poured into S&P 500 ETFs in a single day while QQQ posted more outflows, a second straight week of real money moving away from concentrated Nasdaq-100 exposure. The Iran sanctions news and the Canada/China tariff escalation are geopolitical and trade-policy noise that matter more for oil, industrials and financials than for tech specifically, and the Druckenmiller/Citadel bond-buyback fight is a real risk to watch but hasn't resolved either way yet. <b>Read: leaning bearish</b> — unlike Monday, today has two concrete, Nasdaq-specific headwinds (semis selling off, flows rotating away) rather than just uncertainty, which raises the bar for what Nvidia needs to deliver this week to turn sentiment back around.";
 
@@ -1881,91 +1884,7 @@
     }, 60);
   }
 
-  window.IW_MAP_PINS = { pins: EVENT_PINS, storyTitle: storyTitleFor };
-  (function renderMapPins() {
-    var g = document.getElementById("mapPins");
-    g.innerHTML = EVENT_PINS.map(function (p) {
-      var pt = projectPin(p.lon, p.lat);
-      return '<g class="map-pin" data-pin="' + p.id + '" tabindex="0" role="button" aria-label="' + p.loc + '" transform="translate(' + pt[0].toFixed(1) + ',' + pt[1].toFixed(1) + ')">' +
-        '<circle class="map-pin-halo" r="4"></circle>' +
-        '<circle class="map-pin-dot" r="4.5"></circle>' +
-        '</g>';
-    }).join("");
-
-    var tooltip = document.getElementById("mapTooltip");
-    var wrap = document.getElementById("mapWrap");
-    var svg = document.getElementById("worldMap");
-    var activePinId = null;
-
-    function showTooltip(pin, anchorX, anchorY) {
-      var titles = pin.storyIds.map(storyTitleFor).filter(Boolean);
-      tooltip.innerHTML =
-        '<span class="mt-loc">' + pin.loc + '</span>' +
-        '<span class="mt-title">' + titles[0] + '</span>' +
-        '<span class="mt-desc">' + pin.desc + '</span>' +
-        '<a href="#" class="mt-link" data-jump="' + pin.storyIds[0] + '">View story in feed &rarr;</a>' +
-        (titles.length > 1 ? '<div style="margin-top:6px;"><a href="#" class="mt-link" data-jump="' + pin.storyIds[1] + '">+ ' + (titles.length - 1) + ' more story &rarr;</a></div>' : "");
-      var wrapRect = wrap.getBoundingClientRect();
-      var left = anchorX + 14, top = anchorY - 10;
-      if (left + 264 > wrapRect.width) left = anchorX - 264 - 14;
-      if (left < 4) left = 4;
-      if (top + 140 > wrapRect.height) top = wrapRect.height - 144;
-      if (top < 4) top = 4;
-      tooltip.style.left = left + "px";
-      tooltip.style.top = top + "px";
-      tooltip.classList.add("show");
-    }
-    function hideTooltip() { tooltip.classList.remove("show"); activePinId = null; g.querySelectorAll(".map-pin.active").forEach(function (el) { el.classList.remove("active"); }); }
-
-    function activatePin(pinEl) {
-      var id = Number(pinEl.getAttribute("data-pin"));
-      var pin = EVENT_PINS.filter(function (p) { return p.id === id; })[0];
-      if (!pin) return;
-      if (activePinId === id) { hideTooltip(); return; }
-      g.querySelectorAll(".map-pin.active").forEach(function (el) { el.classList.remove("active"); });
-      pinEl.classList.add("active");
-      activePinId = id;
-      var svgRect = svg.getBoundingClientRect();
-      var wrapRect = wrap.getBoundingClientRect();
-      var scaleX = svgRect.width / MAP_VB_W, scaleY = svgRect.height / MAP_VB_H;
-      var pt = projectPin(pin.lon, pin.lat);
-      var anchorX = (svgRect.left - wrapRect.left) + pt[0] * scaleX;
-      var anchorY = (svgRect.top - wrapRect.top) + pt[1] * scaleY;
-      showTooltip(pin, anchorX, anchorY);
-    }
-
-    g.addEventListener("click", function (e) {
-      var pinEl = e.target.closest(".map-pin");
-      if (pinEl) { activatePin(pinEl); return; }
-    });
-    g.addEventListener("keydown", function (e) {
-      if (e.key !== "Enter" && e.key !== " ") return;
-      var pinEl = e.target.closest(".map-pin");
-      if (pinEl) { e.preventDefault(); activatePin(pinEl); }
-    });
-    tooltip.addEventListener("click", function (e) {
-      var link = e.target.closest("[data-jump]");
-      if (!link) return;
-      e.preventDefault();
-      jumpToStory(Number(link.getAttribute("data-jump")));
-    });
-    document.addEventListener("click", function (e) {
-      if (!e.target.closest(".map-pin") && !e.target.closest(".map-tooltip")) hideTooltip();
-    });
-
-    document.getElementById("mapPinCount").textContent = EVENT_PINS.length + " pin" + (EVENT_PINS.length === 1 ? "" : "s") + " from today's stories";
-  })();
-
-  (function renderMapList() {
-    var list = document.getElementById("mapList");
-    list.innerHTML = EVENT_PINS.map(function (p) {
-      return '<div class="card map-list-item" data-jump="' + p.storyIds[0] + '"><span class="map-list-pin"></span><div><span class="map-list-loc">' + p.loc + '</span><span class="map-list-title">' + p.desc + '</span></div></div>';
-    }).join("");
-    list.addEventListener("click", function (e) {
-      var item = e.target.closest("[data-jump]");
-      if (item) jumpToStory(Number(item.getAttribute("data-jump")));
-    });
-  })();
+  window.IW_PROJECT = projectPin;
 
   /* ============ Overview table ============ */
   var tableState = { filter: "all", query: "", sortKey: "updated", sortDir: -1, page: 1, pageSize: 5 };
@@ -2821,6 +2740,8 @@
 <script src="futures/render.js"></script>
 <script src="futures/ui.js"></script>
 <script src="bias/bias.js"></script>
+<script src="news/events.js"></script>
+<script src="news/map.js"></script>
 <script src="bias/live.js"></script>
 <script src="ix/core.js"></script>
 <script src="ix/data.js"></script>

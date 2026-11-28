@@ -27,13 +27,15 @@
   function modalOpen() { var m = document.getElementById("modalBackdrop"); return !!m && m.classList.contains("open"); }
 
   /* ---------- Data ---------- */
-  function storyEvents(now) {
-    var ref = g.IW_MAP_PINS;
-    if (!ref || !ref.pins) return [];
-    return ref.pins.map(function (p, i) {
-      var title = ref.storyTitle ? ref.storyTitle(p.storyIds[0]) : null;
-      return { id: "story-" + p.id, layer: "macro", cat: "macro", kind: "story", title: p.loc + (title ? ": " + title : ""), lat: p.lat, lon: p.lon, t: now - (i + 1) * 47 * 60000,
-        sev: /hormuz|tehran/i.test(p.loc) ? "high" : /washington|beijing/i.test(p.loc) ? "elevated" : "info", desc: p.desc, source: "Story feed", radiusKm: 150, storyId: p.storyIds[0] };
+  /* Live headlines from news/events.js, one marker per place with its real publication time. GDACS alerts are left out here
+   * because the globe already draws live USGS and NASA EONET hazards. */
+  function storyEvents() {
+    var N = g.NEWS;
+    if (!N) return [];
+    return N.state.pins.filter(function (p) { return p.kind === "news"; }).map(function (p) {
+      var top = p.items[0];
+      return { id: p.id, layer: "macro", cat: "macro", kind: "story", title: p.loc + ": " + top.title, lat: p.lat, lon: p.lon, t: p.latest,
+        sev: p.sev, desc: p.items.slice(1, 4).map(function (i) { return i.title; }).join(" | "), source: top.source, url: top.link, radiusKm: 150 };
     });
   }
 
@@ -57,7 +59,7 @@
       return fetchJson(url).then(function (j) { parts[key] = normalize(j); H.feedStatus[name] = "ok"; }).catch(function (e) { H.feedStatus[name] = "failed (" + e.message + ")"; });
     }
     return Promise.all([job(USGS_URL, "quakes", "usgs", GX.normalizeUsgs), job(EONET_URL, "eonet", "eonet", GX.normalizeEonet)]).then(function () {
-      H.events = [].concat(parts.quakes, parts.eonet, storyEvents(now), calendarEvents(now));
+      H.events = [].concat(parts.quakes, parts.eonet, storyEvents(), calendarEvents(now));
       scene.setEvents(H.events);
       H.listSig = "";
       renderStatus();
@@ -587,6 +589,14 @@
       if (typeof IntersectionObserver !== "undefined") {
         new IntersectionObserver(function (es) { H.inView = es[0].isIntersecting && es[0].intersectionRatio >= 0.25; }, { threshold: [0, 0.25, 0.5] }).observe(H.stage);
       }
+      /* New headlines (every 30 minutes) replace the story markers without refetching the hazard feeds. */
+      if (g.NEWS) g.NEWS.subscribe(function (n) {
+        if (n.loading) return;
+        var keep = H.events.filter(function (e) { return e.kind !== "story"; });
+        H.events = keep.concat(storyEvents());
+        scene.setEvents(H.events);
+        H.listSig = "";
+      });
       /* Feeds only refresh while the globe is on screen; rendering stops when it is not. */
       setInterval(function () { if (visible()) loadFeeds(); }, REFRESH_FEED_MS);
       setInterval(function () {

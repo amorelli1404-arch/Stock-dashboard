@@ -8,6 +8,16 @@ Open `index.html` in a browser (or serve the folder, e.g. `python -m http.server
 
 Trade-history persistence and CSV export rely on the claude.ai Artifact runtime (`window.claude` db/downloads capabilities); outside it the page falls back to local-only demo data and clipboard export.
 
+## Event Map: live events (every 30 minutes)
+
+Both the **Story map** and the 3D globe show live headlines instead of fixed pins. The page pulls BBC World, Al Jazeera, CNBC World, NPR World and investingLive (through the free rss2json service) plus **GDACS** disaster alerts, **every 30 minutes** while the page is open.
+
+- A status bar shows the last update time, a countdown to the next one, a **Refresh now** button (once a minute) and which sources loaded. A source that fails is struck through and keeps its earlier stories.
+- Reopening the page within 30 minutes shows the saved copy and keeps the same schedule. If a background tab misses an update, it runs as soon as you return. If every source fails, it retries after 2 minutes.
+- Each headline is placed at the first location it names, from a built-in list of countries, cities and chokepoints. The US is used only when nothing else is named. Headlines that name no known place are left off. **Placement is automatic and can be wrong.**
+- Stories older than 48 hours are dropped, repeated headlines are merged, and pins pulse while under 3 hours old. Colour follows keywords: orange for conflict or casualties, yellow for notable events. GDACS shows every orange and red alert from the last week, plus green earthquakes, floods, cyclones and volcanoes.
+- The free rss2json service caches feeds, so a story can appear later than on the publisher's own site. Updates run only while the page is open; nothing runs on a server.
+
 ## Event Map: 3D Globe
 
 The Event Map view has a **Story map / 3D Globe** switch. The globe is a CesiumJS scene (loaded on demand from jsDelivr, so the rest of the app stays light) with a command-center HUD:
