@@ -258,11 +258,11 @@
     ds.entities.removeAll();
     storms.forEach(function (ev) {
       var flat = []; ev.track.forEach(function (p) { flat.push(p.lon, p.lat, 4000); });
-      if (ev.track.length > 1) addE(ds.entities, { polyline: { positions: C.Cartesian3.fromDegreesArrayHeights(flat), width: 3, material: new C.PolylineGlowMaterialProperty({ glowPower: 0.2, color: color("#A371F7", 0.9) }) }, gx: { type: "event", item: ev } });
+      if (ev.track.length > 1) addE(ds.entities, { polyline: { positions: C.Cartesian3.fromDegreesArrayHeights(flat), width: 3, material: new C.PolylineGlowMaterialProperty({ glowPower: 0.2, color: color("#ff7a00", 0.9) }) }, gx: { type: "event", item: ev } });
       var cone = GX.stormCone(ev.track, 72, 12);
       if (cone) {
         var ring = []; cone.forEach(function (p) { ring.push(p.lon, p.lat); });
-        addE(ds.entities, { polygon: { hierarchy: C.Cartesian3.fromDegreesArray(ring), material: color("#A371F7", 0.16), outline: true, outlineColor: color("#A371F7", 0.7), height: 0 }, gx: { type: "event", item: ev } });
+        addE(ds.entities, { polygon: { hierarchy: C.Cartesian3.fromDegreesArray(ring), material: color("#ff7a00", 0.16), outline: true, outlineColor: color("#ff7a00", 0.7), height: 0 }, gx: { type: "event", item: ev } });
       }
     });
   }

@@ -10,8 +10,8 @@
 
   var STORE = "indexwatch.ix.v1", PLAN_STORE = "indexwatch.ix.plans.v1", SEASON_STORE = "indexwatch.ix.season.v1";
   var SIM_TICK_MS = 1000, PANEL_MS = 1000, DRAW_MIN_MS = 80, HVW_MS = 15 * 60000, FRESH_MS = 30000, REACT_MIN = 5, MAX_CSV = 4 * 1024 * 1024, UPCOMING = 6;
-  var TOGGLES = [["vpRth", "VP RTH", "#38bdf8"], ["vpEth", "VP ETH", "#a78bfa"], ["ib", "IB 1.5x / 2x", "#38bdf8"], ["pdh", "PDH", "#f87171"], ["pdl", "PDL", "#4ade80"], ["pdc", "PDC", "#cbd5e1"],
-    ["onh", "ONH", "#c4b5fd"], ["onl", "ONL", "#93c5fd"], ["open", "RTH Open", "#fde047"], ["or", "OR box", "#2dd4bf"], ["div", "CVD divergences", "#f59e0b"]];
+  var TOGGLES = [["vpRth", "VP RTH", "#38bdf8"], ["vpEth", "VP ETH", "#ffb84d"], ["ib", "IB 1.5x / 2x", "#38bdf8"], ["pdh", "PDH", "#f87171"], ["pdl", "PDL", "#4ade80"], ["pdc", "PDC", "#cbd5e1"],
+    ["onh", "ONH", "#ffd699"], ["onl", "ONL", "#93c5fd"], ["open", "RTH Open", "#fde047"], ["or", "OR box", "#2dd4bf"], ["div", "CVD divergences", "#f59e0b"]];
   var TABS = [["breadth", "Breadth"], ["ratio", "NQ / ES"], ["levels", "Levels"], ["news", "Headlines"], ["scen", "Scenarios"]];
   var DEFAULT = { contract: "ES", source: "sim", speed: 10, tf: 5, orMin: 15, tab: "breadth", riskOpen: true, unit: "ticks",
     show: { vpRth: true, vpEth: false, ib: true, pdh: true, pdl: true, pdc: true, onh: true, onl: true, open: true, or: false, div: true },
@@ -272,7 +272,7 @@
     setText($("ixRatioChg"), signed(chg) + "% this session"); setCls($("ixRatioChg"), "num " + tone(chg));
     setText($("ixRatioLead"), Math.abs(spread) < 0.05 ? "NQ and ES are moving together." : (spread > 0 ? "NQ is leading ES by " : "NQ is lagging ES by ") + Math.abs(spread).toFixed(2) + " percentage points.");
     IX.drawLines($("ixRatioChart"), [{ label: "NQ/ES", color: "#38bdf8", points: series.map(function (p) { return { x: p.t, v: p.v }; }) }], { digits: 4 });
-    IX.drawLines($("ixRelChart"), [{ label: "NQ %", color: "#a78bfa", points: series.map(function (p) { return { x: p.t, v: p.nqPct }; }) }, { label: "ES %", color: "#fde047", points: series.map(function (p) { return { x: p.t, v: p.esPct }; }) }], { zero: true, suffix: "%" });
+    IX.drawLines($("ixRelChart"), [{ label: "NQ %", color: "#ffb84d", points: series.map(function (p) { return { x: p.t, v: p.nqPct }; }) }, { label: "ES %", color: "#fde047", points: series.map(function (p) { return { x: p.t, v: p.esPct }; }) }], { zero: true, suffix: "%" });
   }
 
   function row(cells, cls) { var tr = el("tr", cls || ""); cells.forEach(function (c, i) { var td = el(i ? "td" : "th", i ? "num" : ""); if (typeof c === "object" && c) { td.textContent = c.t; td.className += " " + c.c; } else td.textContent = c; tr.appendChild(td); }); return tr; }
@@ -330,7 +330,7 @@
         if (h.link) { var a = el("a", "ix-link", "Open the story ↗"); a.href = h.link; a.target = "_blank"; a.rel = "noopener noreferrer"; item.appendChild(a); }
       }
       box.appendChild(item);
-      if (open) IX.drawLines(item.querySelector("canvas"), rx.filter(function (q) { return q.x; }).map(function (q) { return { label: q.root, color: q.root === "ES" ? "#fde047" : "#a78bfa", points: q.x.series.map(function (p) { return { x: p.m, v: (p.v / q.x.base - 1) * 100 }; }) }; }), { zero: true, markerX: 0, suffix: "%" });
+      if (open) IX.drawLines(item.querySelector("canvas"), rx.filter(function (q) { return q.x; }).map(function (q) { return { label: q.root, color: q.root === "ES" ? "#fde047" : "#ffb84d", points: q.x.series.map(function (p) { return { x: p.m, v: (p.v / q.x.base - 1) * 100 }; }) }; }), { zero: true, markerX: 0, suffix: "%" });
     });
   }
 

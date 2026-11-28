@@ -1,0 +1,76 @@
+/* Terminal theme: black, amber headers, white data, green / red for direction. Flat: no gradients, glows, glass or large radii.
+ * Loaded after every other stylesheet so it re-skins each module through its own colour tokens. */
+:root, :root[data-theme="dark"], :root[data-theme="light"] {
+  color-scheme: dark;
+  --bg: #000000; --bg-elevated: #000000; --surface: #0a0a0a; --surface-solid: #0a0a0a; --surface-alt: #141414;
+  --border: #2a2a2a; --border-soft: #222222; --text: #e6e6e6; --text-muted: #a6a6a6; --text-faint: #737373;
+  --accent: #ff9f1a; --accent-strong: #e88a00; --accent-ink: #000000; --accent-soft: rgba(255, 159, 26, 0.14);
+  --glow-1: transparent; --glow-2: transparent; --glow-soft: none; --shadow-sm: none; --shadow-lg: none;
+  --bull: #00c853; --bull-bg: rgba(0, 200, 83, 0.13); --bear: #ff3b30; --bear-bg: rgba(255, 59, 48, 0.13);
+  --mixed: #a6a6a6; --mixed-bg: rgba(166, 166, 166, 0.13); --navy: #0a0a0a; --navy-ink: #ffffff;
+  --radius-lg: 2px; --radius-md: 2px; --radius-sm: 2px;
+  --map-ocean: #000000; --map-land: #1c1c1c; --map-grid: rgba(255, 159, 26, 0.10);
+  --term-amber: #ff9f1a;
+  --term-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+html, body { background: #000 !important; color: var(--text); }
+body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+.glow { display: none !important; }
+*, *::before, *::after { box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; border-radius: 2px !important; text-shadow: none !important; }
+/* Things that are genuinely round stay round. */
+.gb-circle, .gb-dot, .gb-live i, .gb-pill::before, .gb-gauge .knob, .gb-sq, .of-dot, .donut-ring, .donut-ring::before, .donut-ring::after, .donut-hole, .legend-dot, .impact-chip .dot, .step-num, .toggle::after, .run-row .run-dot, .map-list-pin, .term-news-sent, .gx-dot, .gx-ldot, .status-dot, .dot, .bell-dot, .map-pin, .map-pin *, .map-legend-dot, input[type="radio"], .gx-split-handle { border-radius: 50% !important; }
+.toggle { border-radius: 999px !important; }
+#areaChart circle, #termChart circle, #tradeChart circle { filter: none !important; }
+
+/* ---------- Shell ---------- */
+.sidebar { background: #000 !important; border-right: 1px solid #2a2a2a !important; }
+header.topbar, .topbar { background: #000 !important; border-bottom: 2px solid var(--term-amber) !important; }
+.brand-mark, .logo-mark, .avatar { background: var(--term-amber) !important; color: #000 !important; border-color: var(--term-amber) !important; }
+.brand-name { text-transform: uppercase; letter-spacing: 0.06em; color: var(--term-amber); }
+.nav-item { text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.74rem; }
+.nav-item:hover { background: #141414 !important; color: #fff !important; }
+.nav-item.active { background: var(--term-amber) !important; color: #000 !important; font-weight: 700; }
+.breadcrumb b { color: var(--term-amber); text-transform: uppercase; }
+
+/* ---------- Type and surfaces ---------- */
+.card { background: #0a0a0a !important; border: 1px solid #262626 !important; }
+h1.page-title, .page-title, .fd-title h1, .ix-title h1 { color: var(--term-amber) !important; text-transform: uppercase; letter-spacing: 0.04em; }
+.panel-title, .cluster-title, .outlook-title { color: var(--term-amber) !important; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.86rem !important; }
+table thead th { color: var(--term-amber) !important; }
+.mono, .num, .kpi-value, td { font-variant-numeric: tabular-nums; }
+.mono, .kpi-value { font-family: var(--term-mono); }
+a { color: #4da3ff; }
+.nav-item, .btn, a.gx-btn, a.gb-headline, a.gb-rel { color: inherit; }
+::selection { background: var(--term-amber); color: #000; }
+:focus-visible { outline: 1px solid var(--term-amber) !important; outline-offset: 1px; }
+
+/* ---------- Order Flow terminal ---------- */
+#ofRoot {
+  --bg: #000; --surface: #0a0a0a; --surface-solid: #0a0a0a; --surface-alt: #141414; --border: #262626; --border-soft: #262626;
+  --text: #e6e6e6; --text-muted: #a6a6a6; --text-faint: #737373; --accent: #ff9f1a; --accent-strong: #e88a00; --accent-ink: #000; --accent-soft: rgba(255, 159, 26, 0.14);
+  --bull: #00c853; --bull-bg: rgba(0, 200, 83, 0.13); --bear: #ff3b30; --bear-bg: rgba(255, 59, 48, 0.13);
+}
+.of-panel-head { color: var(--term-amber); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ---------- Futures Desk ---------- */
+.fd { --fd-bg: #000; --fd-panel: #0a0a0a; --fd-panel-2: #141414; --fd-line: #262626; --fd-text: #e6e6e6; --fd-muted: #a6a6a6; --fd-faint: #666; --fd-buy: #00c853; --fd-sell: #ff3b30; --fd-accent: #ff9f1a; }
+.fd-ph { color: var(--term-amber) !important; }
+.fd-seg button.active { background: var(--term-amber) !important; color: #000 !important; }
+
+/* ---------- Index Workstation ---------- */
+.ix { --ix-bg: #000; --ix-panel: #0a0a0a; --ix-panel-2: #141414; --ix-line: #262626; --ix-text: #e6e6e6; --ix-muted: #a6a6a6; --ix-faint: #737373; --ix-up: #00c853; --ix-dn: #ff3b30; --ix-acc: #ff9f1a; --ix-warn: #ffd000; }
+.ix-ph, .ix-sub, .ix-tbl thead th { color: var(--term-amber) !important; }
+.ix-seg button.active { color: #000; }
+
+/* ---------- Globe / Bias card ---------- */
+.gb { --gb-bg: #000; --gb-card: #0a0a0a; --gb-line: #262626; --gb-text: #e6e6e6; --gb-dim: #999; --gb-lav: #ff9f1a; --gb-pink: #ff3b30; --gb-pink-d: #d9362b; --gb-green: #00c853; --gb-amber: #ffd000; --gb-red: #ff3b30; background: #000 !important; }
+.gb-alert { background: #140605 !important; border-color: #7a1d18 !important; }
+.gb-alert.plain { background: #0a0a0a !important; border-color: #262626 !important; }
+.gb-sheet-panel { background: #0a0a0a !important; border-color: #333 !important; }
+
+/* ---------- 3D globe HUD ---------- */
+.gx-stage { --gx-bg: rgba(0, 0, 0, 0.9); --gx-line: #2a2a2a; --gx-text: #e6e6e6; --gx-dim: #999; --gx-acc: #ff9f1a; }
+.gx-title, .gx-dh, .gx-brief-sh { color: var(--term-amber); }
+.gx-seg button.active { background: var(--term-amber); color: #000; }
+.map-modes button.active { background: var(--term-amber); color: #000; }

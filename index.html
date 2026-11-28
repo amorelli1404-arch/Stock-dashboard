@@ -11,65 +11,17 @@
 <link rel="stylesheet" href="ix/ix.css">
 <style>
   /* ============ Tokens ============ */
+  /* Colour tokens live in theme-terminal.css; these are the fallbacks used before it loads. */
   :root {
-    --bg: #0d0e15; --bg-elevated: #12131c; --surface: rgba(24,25,37,0.60); --surface-solid: #181925;
-    --surface-alt: #1e1f2d; --border: #2a2c3d; --border-soft: rgba(139,92,246,0.12);
-    --text: #f3f4f6; --text-muted: #94a3b8; --text-faint: #6b7280;
-    --accent: #8b5cf6; --accent-strong: #7c3aed; --accent-ink: #ffffff; --accent-soft: rgba(139,92,246,0.16);
-    --glow-1: rgba(139,92,246,0.35); --glow-2: rgba(59,130,246,0.25);
-    --bull: #10b981; --bull-bg: rgba(16,185,129,0.14);
-    --bear: #ef4444; --bear-bg: rgba(239,68,68,0.14);
-    --mixed: #94a3b8; --mixed-bg: rgba(148,163,184,0.14);
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.5);
-    --shadow-lg: 0 20px 60px -20px rgba(0,0,0,0.7);
-    --glow-soft: 0 0 15px rgba(139,92,246,0.4);
-    --navy: #161b33; --navy-ink: #ffffff;
-    --radius-lg: 16px; --radius-md: 14px; --radius-sm: 9px;
-    --map-ocean: #0a0b12; --map-land: #262840; --map-grid: rgba(139,92,246,0.10);
-  }
-  @media (prefers-color-scheme: light) {
-    :root {
-      --bg: #f4f4fb; --bg-elevated: #ececf5; --surface: rgba(255,255,255,0.80); --surface-solid: #ffffff;
-      --surface-alt: #ececf5; --border: #dcdce8; --border-soft: rgba(124,58,237,0.08);
-      --text: #15161f; --text-muted: #5b5f70; --text-faint: #8a8da0;
-      --accent: #7c3aed; --accent-strong: #6d28d9; --accent-ink: #ffffff; --accent-soft: rgba(124,58,237,0.10);
-      --glow-1: rgba(124,58,237,0.12); --glow-2: rgba(59,130,246,0.10);
-      --bull: #059669; --bull-bg: rgba(5,150,105,0.10);
-      --bear: #dc2626; --bear-bg: rgba(220,38,38,0.09);
-      --mixed: #6b6f80; --mixed-bg: rgba(107,111,128,0.10);
-      --shadow-sm: 0 1px 2px rgba(18,18,30,0.06); --shadow-lg: 0 20px 50px -25px rgba(18,18,30,0.22);
-      --glow-soft: 0 0 15px rgba(124,58,237,0.22);
-      --navy: #1b2340; --navy-ink: #ffffff;
-      --map-ocean: #e3e3f0; --map-land: #fbfafe; --map-grid: rgba(124,58,237,0.08);
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #0d0e15; --bg-elevated: #12131c; --surface: rgba(24,25,37,0.60); --surface-solid: #181925;
-    --surface-alt: #1e1f2d; --border: #2a2c3d; --border-soft: rgba(139,92,246,0.12);
-    --text: #f3f4f6; --text-muted: #94a3b8; --text-faint: #6b7280;
-    --accent: #8b5cf6; --accent-strong: #7c3aed; --accent-ink: #ffffff; --accent-soft: rgba(139,92,246,0.16);
-    --glow-1: rgba(139,92,246,0.35); --glow-2: rgba(59,130,246,0.25);
-    --bull: #10b981; --bull-bg: rgba(16,185,129,0.14);
-    --bear: #ef4444; --bear-bg: rgba(239,68,68,0.14);
-    --mixed: #94a3b8; --mixed-bg: rgba(148,163,184,0.14);
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.5); --shadow-lg: 0 20px 60px -20px rgba(0,0,0,0.7);
-    --glow-soft: 0 0 15px rgba(139,92,246,0.4);
-    --navy: #161b33; --navy-ink: #ffffff;
-    --map-ocean: #0a0b12; --map-land: #262840; --map-grid: rgba(139,92,246,0.10);
-  }
-  :root[data-theme="light"] {
-    --bg: #f4f4fb; --bg-elevated: #ececf5; --surface: rgba(255,255,255,0.80); --surface-solid: #ffffff;
-    --surface-alt: #ececf5; --border: #dcdce8; --border-soft: rgba(124,58,237,0.08);
-    --text: #15161f; --text-muted: #5b5f70; --text-faint: #8a8da0;
-    --accent: #7c3aed; --accent-strong: #6d28d9; --accent-ink: #ffffff; --accent-soft: rgba(124,58,237,0.10);
-    --glow-1: rgba(124,58,237,0.12); --glow-2: rgba(59,130,246,0.10);
-    --bull: #059669; --bull-bg: rgba(5,150,105,0.10);
-    --bear: #dc2626; --bear-bg: rgba(220,38,38,0.09);
-    --mixed: #6b6f80; --mixed-bg: rgba(107,111,128,0.10);
-    --shadow-sm: 0 1px 2px rgba(18,18,30,0.06); --shadow-lg: 0 20px 50px -25px rgba(18,18,30,0.22);
-    --glow-soft: 0 0 15px rgba(124,58,237,0.22);
-    --navy: #1b2340; --navy-ink: #ffffff;
-    --map-ocean: #e3e3f0; --map-land: #fbfafe; --map-grid: rgba(124,58,237,0.08);
+    color-scheme: dark;
+    --bg: #000000; --bg-elevated: #000000; --surface: #0a0a0a; --surface-solid: #0a0a0a; --surface-alt: #141414;
+    --border: #2a2a2a; --border-soft: #222222; --text: #e6e6e6; --text-muted: #a6a6a6; --text-faint: #737373;
+    --accent: #ff9f1a; --accent-strong: #e88a00; --accent-ink: #000000; --accent-soft: rgba(255,159,26,0.14);
+    --glow-1: transparent; --glow-2: transparent; --glow-soft: none;
+    --bull: #00c853; --bull-bg: rgba(0,200,83,0.13); --bear: #ff3b30; --bear-bg: rgba(255,59,48,0.13);
+    --mixed: #a6a6a6; --mixed-bg: rgba(166,166,166,0.13); --shadow-sm: none; --shadow-lg: none; --navy: #0a0a0a; --navy-ink: #ffffff;
+    --radius-lg: 2px; --radius-md: 2px; --radius-sm: 2px;
+    --map-ocean: #000000; --map-land: #1c1c1c; --map-grid: rgba(255,159,26,0.10);
   }
 
   /* ============ Base ============ */
@@ -624,6 +576,7 @@
     .breadcrumb { display: none; }
   }
 </style>
+<link rel="stylesheet" href="theme-terminal.css">
 
 <div class="glow glow-a" aria-hidden="true"></div>
 <div class="glow glow-b" aria-hidden="true"></div>
@@ -673,21 +626,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
         <span class="nav-label">Story Feed</span>
       </button>
-      <button class="nav-item" data-view="macro" type="button">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10l9-6 9 6M5 10v9M19 10v9M9 10v9M15 10v9M3 21h18"/></svg>
-        <span class="nav-label">Macro &amp; Benchmarks</span>
-      </button>
       <button class="nav-item" data-view="fundamentals" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
         <span class="nav-label">Fundamentals</span>
-      </button>
-      <button class="nav-item" data-view="sentiment" type="button">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 01-11.4 7.9L4 20l1.1-4.9A8.4 8.4 0 1121 11.5z"/></svg>
-        <span class="nav-label">Sentiment Engine</span>
-      </button>
-      <button class="nav-item" data-view="technical" type="button">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17l4-9 4 5 4-11 4 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="nav-label">Technical &amp; Flow</span>
       </button>
       <button class="nav-item" data-view="map" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.6 7-12a7 7 0 10-14 0c0 5.4 7 12 7 12z"/><circle cx="12" cy="9" r="2.4"/></svg>
@@ -1325,7 +1266,7 @@
             <div class="of-group"><span class="of-label">Workspace</span>
               <div class="of-seg" id="ofWorkspaces">
                 <button type="button" data-of-ws="scalp" title="Ladder, execution, footprint, delta and tape">Scalping DOM</button>
-                <button type="button" data-of-ws="macro" title="Footprint, CVD, delta and profile">Macro Structure</button>
+                <button type="button" data-of-ws="macro" title="Footprint, CVD, delta and profile">Structure</button>
                 <button type="button" data-of-ws="tape" title="Heatmap, ladder, tape and alerts">Tape &amp; Heatmap</button>
               </div>
             </div>
@@ -1518,109 +1459,6 @@
         </div>
       </section>
 
-      <!-- ============ MACRO & BENCHMARKS ============ -->
-      <section class="view" data-view="macro">
-        <div class="page-head">
-          <div>
-            <h1 class="page-title">Macro &amp; Benchmark Intelligence</h1>
-            <p class="page-dek">Index levels, rates, volatility and the economic calendar driving sentiment across the S&amp;P 500, Nasdaq-100, Russell 2000 and Dow Jones.</p>
-          </div>
-          <span class="kw-tag">Illustrative figures</span>
-        </div>
-
-        <div class="kpi-grid">
-          <div class="card kpi-card">
-            <div class="kpi-top"><span class="kpi-label">S&amp;P 500</span><span class="kpi-delta up">▲ 0.6%</span></div>
-            <div class="kpi-value">6,481<span>.3</span></div>
-            <div class="kpi-foot"><span style="font-size:0.72rem;color:var(--text-faint);">SPX · 5d range 6,398&ndash;6,502</span>
-              <svg class="spark" width="72" height="26" viewBox="0 0 72 26"><polyline points="0,18 12,16 24,12 36,14 48,8 60,10 72,4" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-          </div>
-          <div class="card kpi-card">
-            <div class="kpi-top"><span class="kpi-label">Nasdaq-100</span><span class="kpi-delta down">▼ 0.4%</span></div>
-            <div class="kpi-value">23,118<span>.9</span></div>
-            <div class="kpi-foot"><span style="font-size:0.72rem;color:var(--text-faint);">NDX · semis-led pullback</span>
-              <svg class="spark" width="72" height="26" viewBox="0 0 72 26"><polyline points="0,8 12,10 24,9 36,13 48,16 60,15 72,20" fill="none" stroke="var(--bear)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-          </div>
-          <div class="card kpi-card">
-            <div class="kpi-top"><span class="kpi-label">Russell 2000</span><span class="kpi-delta up">▲ 0.9%</span></div>
-            <div class="kpi-value">2,312<span>.6</span></div>
-            <div class="kpi-foot"><span style="font-size:0.72rem;color:var(--text-faint);">RUT · small caps outperforming</span>
-              <svg class="spark" width="72" height="26" viewBox="0 0 72 26"><polyline points="0,20 12,17 24,18 36,12 48,10 60,6 72,4" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-          </div>
-          <div class="card kpi-card">
-            <div class="kpi-top"><span class="kpi-label">Dow Jones</span><span class="kpi-delta up">▲ 0.3%</span></div>
-            <div class="kpi-value">44,960</div>
-            <div class="kpi-foot"><span style="font-size:0.72rem;color:var(--text-faint);">DJIA · industrials steady</span>
-              <svg class="spark" width="72" height="26" viewBox="0 0 72 26"><polyline points="0,16 12,15 24,13 36,14 48,11 60,12 72,9" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-          </div>
-        </div>
-
-        <div class="panel-title" style="margin:4px 0 12px;">Rates &amp; volatility</div>
-        <div class="kpi-grid">
-          <div class="card kpi-card">
-            <div class="kpi-top"><span class="kpi-label">10Y Treasury ($TNX)</span><span class="kpi-delta up">▲ 6bp</span></div>
-            <div class="kpi-value">4.31<span>%</span></div>
-          </div>
-          <div class="card kpi-card">
-            <div class="kpi-top"><span class="kpi-label">2Y Treasury</span><span class="kpi-delta up">▲ 3bp</span></div>
-            <div class="kpi-value">3.74<span>%</span></div>
-          </div>
-          <div class="card kpi-card">
-            <div class="kpi-top"><span class="kpi-label">VIX</span><span class="kpi-delta down">▼ 0.8</span></div>
-            <div class="kpi-value">15.4</div>
-          </div>
-          <div class="card kpi-card">
-            <div class="kpi-top"><span class="kpi-label">Fed funds target</span><span class="kpi-tag good">Held</span></div>
-            <div class="kpi-value">4.25<span>&ndash;4.50%</span></div>
-          </div>
-        </div>
-
-        <div class="analytics-grid">
-          <div class="card">
-            <div class="panel-head"><div><div class="panel-title">Fed funds futures &mdash; odds for next FOMC meeting</div><div class="panel-sub">Implied probability by rate-path scenario</div></div></div>
-            <div style="padding:4px 0 16px;">
-              <div class="prob-row"><span class="prob-label">Hold</span><div class="prob-track"><div class="prob-fill" style="width:68%;"></div></div><span class="prob-pct mono">68%</span></div>
-              <div class="prob-row"><span class="prob-label">25bp cut</span><div class="prob-track"><div class="prob-fill" style="width:27%;"></div></div><span class="prob-pct mono">27%</span></div>
-              <div class="prob-row"><span class="prob-label">50bp cut</span><div class="prob-track"><div class="prob-fill" style="width:4%;"></div></div><span class="prob-pct mono">4%</span></div>
-              <div class="prob-row"><span class="prob-label">25bp hike</span><div class="prob-track"><div class="prob-fill" style="width:1%;"></div></div><span class="prob-pct mono">1%</span></div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="panel-head"><div><div class="panel-title">Inflation trend</div><div class="panel-sub">Latest prints, YoY</div></div></div>
-            <div class="table-scroll">
-              <table class="data-table" style="min-width:0;">
-                <thead><tr><th>Metric</th><th>Latest</th><th>Prior</th></tr></thead>
-                <tbody>
-                  <tr><td class="row-title">CPI YoY</td><td class="mono">2.9%</td><td class="mono" style="color:var(--text-muted);">3.0%</td></tr>
-                  <tr><td class="row-title">Core CPI YoY</td><td class="mono">3.1%</td><td class="mono" style="color:var(--text-muted);">3.2%</td></tr>
-                  <tr><td class="row-title">PPI YoY</td><td class="mono">2.4%</td><td class="mono" style="color:var(--text-muted);">2.6%</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="panel-head"><div><div class="panel-title">Economic calendar &mdash; high-impact events</div><div class="panel-sub">FOMC, employment and ISM data that tend to move both indexes</div></div></div>
-          <div class="table-scroll">
-            <table class="data-table">
-              <thead><tr><th>Date</th><th>Event</th><th>Consensus</th><th>Prior</th><th>Impact</th></tr></thead>
-              <tbody>
-                <tr><td class="mono">Sep 9</td><td class="row-title">FOMC Meeting &mdash; rate decision</td><td class="mono">Hold</td><td class="mono">Hold</td><td><span class="impact-chip bear"><span class="dot"></span>High</span></td></tr>
-                <tr><td class="mono">Sep 5</td><td class="row-title">Nonfarm Payrolls (NFP)</td><td class="mono">+165k</td><td class="mono">+142k</td><td><span class="impact-chip bear"><span class="dot"></span>High</span></td></tr>
-                <tr><td class="mono">Sep 3</td><td class="row-title">ISM Manufacturing PMI</td><td class="mono">49.8</td><td class="mono">48.9</td><td><span class="impact-chip mixed"><span class="dot"></span>Medium</span></td></tr>
-                <tr><td class="mono">Sep 11</td><td class="row-title">CPI (headline + core)</td><td class="mono">2.8% YoY</td><td class="mono">2.9% YoY</td><td><span class="impact-chip bear"><span class="dot"></span>High</span></td></tr>
-                <tr><td class="mono">Sep 12</td><td class="row-title">PPI</td><td class="mono">2.3% YoY</td><td class="mono">2.4% YoY</td><td><span class="impact-chip mixed"><span class="dot"></span>Medium</span></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
       <!-- ============ FUNDAMENTALS ============ -->
       <section class="view" data-view="fundamentals">
         <div class="page-head">
@@ -1663,77 +1501,6 @@
                 <tr><td class="row-title mono">MSFT</td><td class="mono">34.6</td><td class="mono">29.4</td><td class="mono">2.1</td><td class="mono">21.0</td><td class="mono">11.9</td><td><span class="idx-chip">Above</span></td><td><span class="idx-chip">Above</span></td></tr>
                 <tr><td class="row-title mono">NVDA</td><td class="mono">46.8</td><td class="mono">33.5</td><td class="mono">1.6</td><td class="mono">29.7</td><td class="mono">22.4</td><td><span class="idx-chip">Below</span></td><td><span class="idx-chip">In line</span></td></tr>
                 <tr><td class="row-title mono">GOOGL</td><td class="mono">24.3</td><td class="mono">21.1</td><td class="mono">1.8</td><td class="mono">15.8</td><td class="mono">6.4</td><td><span class="idx-chip">In line</span></td><td><span class="idx-chip">Below</span></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- ============ SENTIMENT ENGINE ============ -->
-      <section class="view" data-view="sentiment">
-        <div class="page-head">
-          <div>
-            <h1 class="page-title">Machine-Processed News &amp; Sentiment Engine</h1>
-            <p class="page-dek">How raw headlines get aggregated, scored and catalog-tagged before they reach the Story Feed.</p>
-          </div>
-        </div>
-
-        <div class="info-grid">
-          <div class="card info-card"><h3>Source hierarchy</h3><p>SEC EDGAR filings rank highest (primary, verifiable), then tier-1 wires (Bloomberg, Reuters, Benzinga), then corporate press releases &mdash; each headline is weighted by source tier before clustering.</p></div>
-          <div class="card info-card"><h3>NLP scoring</h3><p>Every headline gets a polarity score from -1 (bearish) to +1 (bullish), plus a rolling 24-hour sentiment momentum reading and a check for abnormal headline-volume spikes on a symbol.</p></div>
-          <div class="card info-card"><h3>Catalyst tagging</h3><p>Stories are tagged by event type &mdash; M&amp;A, management turnover, regulatory action, product launch &mdash; so the feed can be filtered by what kind of catalyst is driving the move.</p></div>
-        </div>
-
-        <div class="card">
-          <div class="panel-head"><div><div class="panel-title">Today's stories &mdash; sentiment &amp; catalyst tags</div><div class="panel-sub">Polarity score, 24h momentum and volume-spike flag per story</div></div></div>
-          <div class="table-scroll">
-            <table class="data-table">
-              <thead><tr><th>Story</th><th>Polarity</th><th>24h momentum</th><th>Volume spike</th><th>Catalyst tags</th></tr></thead>
-              <tbody>
-                <tr><td class="row-title">Operation Economic Outcast &mdash; Iran sanctions<span class="row-eyebrow">Geopolitics</span></td><td class="mono">+0.35</td><td><span class="impact-chip mixed"><span class="dot"></span>Flat</span></td><td><span class="idx-chip">Yes</span></td><td><span class="kw-tag">Regulatory</span></td></tr>
-                <tr><td class="row-title">Druckenmiller / Citadel vs. Bessent bond buybacks<span class="row-eyebrow">Bond market</span></td><td class="mono">-0.12</td><td><span class="impact-chip bear"><span class="dot"></span>Falling</span></td><td><span class="idx-chip">No</span></td><td><span class="kw-tag">Policy dispute</span></td></tr>
-                <tr><td class="row-title">Canada / China tariff escalation<span class="row-eyebrow">Trade policy</span></td><td class="mono">-0.18</td><td><span class="impact-chip bear"><span class="dot"></span>Falling</span></td><td><span class="idx-chip">No</span></td><td><span class="kw-tag">Regulatory</span></td></tr>
-                <tr><td class="row-title">Samsung crash hits semis before Nvidia earnings<span class="row-eyebrow">Semiconductors</span></td><td class="mono">-0.41</td><td><span class="impact-chip bear"><span class="dot"></span>Falling</span></td><td><span class="idx-chip">Yes</span></td><td><span class="kw-tag">Earnings risk</span></td></tr>
-                <tr><td class="row-title">$6.4B rotation into S&amp;P 500 ETFs, QQQ outflows<span class="row-eyebrow">Positioning</span></td><td class="mono">-0.08</td><td><span class="impact-chip mixed"><span class="dot"></span>Flat</span></td><td><span class="idx-chip">Yes</span></td><td><span class="kw-tag">Fund flows</span></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- ============ TECHNICAL & MARKET STRUCTURE ============ -->
-      <section class="view" data-view="technical">
-        <div class="page-head">
-          <div>
-            <h1 class="page-title">Technical &amp; Market Structure Analytics</h1>
-            <p class="page-dek">Price-action indicators and institutional positioning signals for SPY, QQQ and DIA.</p>
-          </div>
-          <span class="kw-tag">Illustrative figures</span>
-        </div>
-
-        <div class="card" style="margin-bottom:20px;">
-          <div class="panel-head"><div><div class="panel-title">Technical indicators</div><div class="panel-sub">RVOL, VWAP, moving averages and RSI(14)</div></div></div>
-          <div class="table-scroll">
-            <table class="data-table">
-              <thead><tr><th>Symbol</th><th>RVOL</th><th>VWAP</th><th>50D MA</th><th>200D MA</th><th>RSI(14)</th><th>Trend</th></tr></thead>
-              <tbody>
-                <tr><td class="row-title mono">SPY</td><td class="mono">1.08x</td><td class="mono">648.60</td><td class="mono">641.20</td><td class="mono">612.80</td><td class="mono">58.4</td><td><span class="impact-chip bull"><span class="dot"></span>Above both MAs</span></td></tr>
-                <tr><td class="row-title mono">QQQ</td><td class="mono">1.34x</td><td class="mono">578.90</td><td class="mono">581.40</td><td class="mono">549.10</td><td class="mono">44.7</td><td><span class="impact-chip mixed"><span class="dot"></span>Below 50D, above 200D</span></td></tr>
-                <tr><td class="row-title mono">DIA</td><td class="mono">0.91x</td><td class="mono">449.10</td><td class="mono">444.70</td><td class="mono">428.30</td><td class="mono">61.2</td><td><span class="impact-chip bull"><span class="dot"></span>Above both MAs</span></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="panel-head"><div><div class="panel-title">Institutional flow</div><div class="panel-sub">Options positioning, dark pool estimate, short interest and insider activity</div></div></div>
-          <div class="table-scroll">
-            <table class="data-table">
-              <thead><tr><th>Symbol</th><th>Put/call ratio</th><th>Dark pool vol. (est.)</th><th>Short interest</th><th>Borrow fee</th><th>Insider activity</th></tr></thead>
-              <tbody>
-                <tr><td class="row-title mono">SPY</td><td class="mono">0.88</td><td class="mono">38%</td><td class="mono">1.4%</td><td class="mono">0.3%</td><td><span class="idx-chip">Neutral</span></td></tr>
-                <tr><td class="row-title mono">QQQ</td><td class="mono">1.21</td><td class="mono">41%</td><td class="mono">2.6%</td><td class="mono">0.6%</td><td><span class="impact-chip bear"><span class="dot"></span>Net selling</span></td></tr>
-                <tr><td class="row-title mono">DIA</td><td class="mono">0.76</td><td class="mono">33%</td><td class="mono">0.9%</td><td class="mono">0.2%</td><td><span class="impact-chip bull"><span class="dot"></span>Net buying</span></td></tr>
               </tbody>
             </table>
           </div>
@@ -1981,7 +1748,7 @@
   var navItems = document.querySelectorAll(".nav-item");
   var views = document.querySelectorAll(".view");
   var breadcrumbEl = document.getElementById("breadcrumbCurrent");
-  var VIEW_LABELS = { ix: "Index Workstation", futures: "Futures Desk", overview: "Overview", tradedesk: "Trade Desk", terminal: "Trading Terminal", orderflow: "Order Flow", feed: "Story Feed", macro: "Macro & Benchmarks", fundamentals: "Fundamentals & Valuation", sentiment: "Sentiment Engine", technical: "Technical & Flow", map: "Event Map", symbols: "Symbols Tracked", sources: "Sources & Coverage", schedule: "Refresh Schedule" };
+  var VIEW_LABELS = { ix: "Index Workstation", futures: "Futures Desk", overview: "Overview", tradedesk: "Trade Desk", terminal: "Trading Terminal", orderflow: "Order Flow", feed: "Story Feed", fundamentals: "Fundamentals & Valuation", map: "Event Map", symbols: "Symbols Tracked", sources: "Sources & Coverage", schedule: "Refresh Schedule" };
 
   function setView(name) {
     navItems.forEach(function (n) { n.classList.toggle("active", n.getAttribute("data-view") === name); });

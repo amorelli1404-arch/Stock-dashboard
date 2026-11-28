@@ -1,6 +1,6 @@
 # Index Watch
 
-Dark-mode stock and news analytics dashboard (S&P 500 / Nasdaq-100): order-flow Futures Desk, Trade Desk, Trading Terminal, **Order Flow (futures)**, Macro, Fundamentals, Sentiment Engine, Technical & Flow, Story Feed, Event Map.
+Black terminal-style stock and news analytics dashboard (theme in `theme-terminal.css`) (S&P 500 / Nasdaq-100): order-flow Futures Desk, Trade Desk, Trading Terminal, **Order Flow (futures)**, Fundamentals, Story Feed, Event Map.
 
 **Live site:** https://amorelli1404-arch.github.io/Stock-dashboard/ (GitHub Pages, served from `main`). Add `?feed=live&symbol=XAUUSDT` to start on real Binance futures data.
 

@@ -9,7 +9,7 @@
     port: { label: "Port", color: "#2DD4BF", tags: ["Shipping rates (BDI, FBX)", "Container lines"] },
     airport: { label: "Airport", color: "#C9D1D9", tags: ["Airlines (JETS)", "Air freight"] },
     refinery: { label: "Refinery / energy terminal", color: "#FFA726", tags: ["Crude (CL)", "Brent", "Gasoline (RB)", "Nat gas (NG)"] },
-    fab: { label: "Semiconductor fab", color: "#A371F7", tags: ["Semis (SOX, SMH)", "NQ"] },
+    fab: { label: "Semiconductor fab", color: "#ff7a00", tags: ["Semis (SOX, SMH)", "NQ"] },
     power: { label: "Power / nuclear / hydro", color: "#F2CC60", tags: ["Utilities (XLU)", "Nat gas (NG)", "Uranium (URA)"] },
     ag: { label: "Agricultural belt", color: "#7EE787", tags: ["Wheat (ZW)", "Corn (ZC)", "Soybeans (ZS)"] },
     dc: { label: "Data-center hub", color: "#79C0FF", tags: ["Cloud / tech (NQ)", "Cloud REITs"] }

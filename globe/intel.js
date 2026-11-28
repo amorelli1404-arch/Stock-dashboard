@@ -63,7 +63,7 @@
   /* ---------- Vessels (simulated AIS) ---------- */
   var vessels = [], vesselPts, vesselTrails;
   function buildVessels() {
-    var rng = rnd(20260101), kinds = ["Tanker", "Container ship", "Bulk carrier", "LNG carrier"], colors = { Tanker: "#FFA657", "Container ship": "#56D4DD", "Bulk carrier": "#A5D6FF", "LNG carrier": "#D2A8FF" };
+    var rng = rnd(20260101), kinds = ["Tanker", "Container ship", "Bulk carrier", "LNG carrier"], colors = { Tanker: "#FFA657", "Container ship": "#56D4DD", "Bulk carrier": "#A5D6FF", "LNG carrier": "#ffd27f" };
     vesselPts = new C.PointPrimitiveCollection(); vesselTrails = new C.PolylineCollection();
     X.dataSource("vessels");
     V.scene.primitives.add(vesselPts); V.scene.primitives.add(vesselTrails);
@@ -230,7 +230,7 @@
         var rec = lib.twoline2satrec(m.line1, m.line2);
         if (!rec || rec.error) return;
         var s = { name: String(m.name || "SAT").slice(0, 40), id: m.satelliteId, cls: it.cls, rec: rec, leo: rec.no * 1440 / (2 * Math.PI) > LEO_MIN_MOTION, epoch: m.date };
-        s.pt = satPts.add({ position: X.pos(0, 0, 0), pixelSize: s.cls.indexOf("US government") === 0 ? 6 : 4, color: X.color(s.cls.indexOf("US government") === 0 ? "#FF7B72" : s.cls === "Weather" ? "#A5D6FF" : "#D2A8FF"), outlineColor: X.color("#000", 0.5), outlineWidth: 1 });
+        s.pt = satPts.add({ position: X.pos(0, 0, 0), pixelSize: s.cls.indexOf("US government") === 0 ? 6 : 4, color: X.color(s.cls.indexOf("US government") === 0 ? "#FF7B72" : s.cls === "Weather" ? "#A5D6FF" : "#ffd27f"), outlineColor: X.color("#000", 0.5), outlineWidth: 1 });
         sats.push(s);
       });
       I.state.sats = { n: sats.length, status: sats.length ? "" : "No orbital elements could be loaded." };
@@ -276,9 +276,9 @@
     var foot = Math.min(GX.satHorizonKm(st.h) , 2800) * 1000, track = [];
     for (var m = -45; m <= 45; m += 3) { var q = satState(s, hud.timeMs() + m * 60000); if (q) track.push(q.lonD, q.latD, 0); }
     satEnts = [
-      V.entities.add({ position: X.pos(st.lonD, st.latD, 0), ellipse: { semiMajorAxis: foot, semiMinorAxis: foot, height: 0, material: X.color("#D2A8FF", 0.14), outline: true, outlineColor: X.color("#D2A8FF", 0.85) } }),
-      V.entities.add({ polyline: { positions: C.Cartesian3.fromDegreesArrayHeights(track), width: 2, arcType: C.ArcType.GEODESIC, material: new C.PolylineDashMaterialProperty({ color: X.color("#D2A8FF", 0.9), dashLength: 12 }) } }),
-      V.entities.add({ polyline: { positions: [C.Cartesian3.fromRadians(st.lon, st.lat, st.h * 1000), X.pos(st.lonD, st.latD, 0)], width: 1.5, material: X.color("#D2A8FF", 0.7) } })
+      V.entities.add({ position: X.pos(st.lonD, st.latD, 0), ellipse: { semiMajorAxis: foot, semiMinorAxis: foot, height: 0, material: X.color("#ffd27f", 0.14), outline: true, outlineColor: X.color("#ffd27f", 0.85) } }),
+      V.entities.add({ polyline: { positions: C.Cartesian3.fromDegreesArrayHeights(track), width: 2, arcType: C.ArcType.GEODESIC, material: new C.PolylineDashMaterialProperty({ color: X.color("#ffd27f", 0.9), dashLength: 12 }) } }),
+      V.entities.add({ polyline: { positions: [C.Cartesian3.fromRadians(st.lon, st.lat, st.h * 1000), X.pos(st.lonD, st.latD, 0)], width: 1.5, material: X.color("#ffd27f", 0.7) } })
     ];
   }
 

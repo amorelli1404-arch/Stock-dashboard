@@ -6,7 +6,7 @@
   var AXIS = 64, TIME_H = 18, TOP = 20, RIGHT_PAD = 6, VP_FRACTION = 0.17, LABEL_GAP = 12;
   var MONO = "'JetBrains Mono', 'Roboto Mono', ui-monospace, Consolas, monospace";
   var C = { grid: "rgba(148,163,184,0.09)", text: "#e2e8f0", muted: "#94a3b8", faint: "#64748b", up: "#22c55e", dn: "#ef4444", eth: "rgba(30,41,59,0.55)", panel: "#111827",
-    poc: "#f59e0b", va: "#a78bfa", ib: "#38bdf8", or: "#2dd4bf", pdh: "#f87171", pdl: "#4ade80", pdc: "#cbd5e1", onh: "#c4b5fd", onl: "#93c5fd", open: "#fde047" };
+    poc: "#f59e0b", va: "#ffb84d", ib: "#38bdf8", or: "#2dd4bf", pdh: "#f87171", pdl: "#4ade80", pdc: "#cbd5e1", onh: "#ffd699", onl: "#93c5fd", open: "#fde047" };
   IX.COLORS = C;
 
   function setup(canvas) {
@@ -94,7 +94,7 @@
         ctx.fillRect(fromRight ? x1 - len : 0, top, len, Math.max(1, bot - top - 0.5));
       });
     }
-    if (d.show.vpEth) histogram(d.vpEth, false, "167,139,250");
+    if (d.show.vpEth) histogram(d.vpEth, false, "255,184,77");
     if (d.show.vpRth) histogram(d.vpRth, true, "56,189,248");
 
     function sessionX(from) {

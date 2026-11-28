@@ -18,7 +18,7 @@
   GX.LAYERS = [
     { id: "macro", label: "Macro & Geopolitical", color: "#58A6FF" },
     { id: "quake", label: "Earthquakes", color: "#EF5350" },
-    { id: "storm", label: "Cyclones & Storms", color: "#A371F7" },
+    { id: "storm", label: "Cyclones & Storms", color: "#ff7a00" },
     { id: "wildfire", label: "Wildfires", color: "#FFA726" },
     { id: "volcano", label: "Volcanoes", color: "#F85149" },
     { id: "supply", label: "Shipping & Chokepoints", color: "#2DD4BF" },
@@ -28,7 +28,7 @@
     { id: "borders", label: "Country Borders", color: "#8B949E" },
     { id: "aircraft", label: "Aircraft (ADS-B)", color: "#E6EDF3", off: true },
     { id: "vessels", label: "Vessels (AIS, simulated)", color: "#56D4DD" },
-    { id: "sats", label: "Satellites", color: "#D2A8FF" },
+    { id: "sats", label: "Satellites", color: "#ffd27f" },
     { id: "gnss", label: "GNSS interference zones", color: "#FF7B72" },
     { id: "landings", label: "Cable landing stations", color: "#79C0FF" },
     { id: "outages", label: "Internet outages", color: "#FFA657", off: true },

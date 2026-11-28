@@ -7,8 +7,8 @@
 
   var AXIS_W = 64, STRIP_H = 40, TOP_PAD = 16, MONO = "'JetBrains Mono', 'Roboto Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace";
   var AMBER = "#fbbf24", NICE_AGGR = [1, 2, 4, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000];
-  var ANCHOR_COLORS = ["#22d3ee", "#f472b6", "#a3e635", "#fb923c"];
-  var HTF = [["pdh", "PDH", "#f87171"], ["pdl", "PDL", "#34d399"], ["pdc", "PDC", "#94a3b8"], ["onh", "ONH", "#fbbf24"], ["onl", "ONL", "#60a5fa"], ["wo", "WO", "#c084fc"]];
+  var ANCHOR_COLORS = ["#22d3ee", "#00c8ff", "#a3e635", "#fb923c"];
+  var HTF = [["pdh", "PDH", "#f87171"], ["pdl", "PDL", "#34d399"], ["pdc", "PDC", "#94a3b8"], ["onh", "ONH", "#fbbf24"], ["onl", "ONL", "#60a5fa"], ["wo", "WO", "#d9a441"]];
 
   function setup(canvas) {
     var dpr = window.devicePixelRatio || 1, r = canvas.getBoundingClientRect();
@@ -24,7 +24,7 @@
     var cs = getComputedStyle(document.getElementById("ofRoot") || document.documentElement);
     function v(n, fb) { return (cs.getPropertyValue(n) || "").trim() || fb; }
     return { bull: v("--bull", "#10b981"), bear: v("--bear", "#ef4444"), text: v("--text", "#f3f4f6"), muted: v("--text-muted", "#94a3b8"),
-      faint: v("--text-faint", "#6b7280"), accent: v("--accent", "#8b5cf6"), bg: v("--bg", "#0d0e15"), surface: v("--surface-solid", "#181925"), border: v("--border", "#2a2c3d") };
+      faint: v("--text-faint", "#6b7280"), accent: v("--accent", "#ff9f1a"), bg: v("--bg", "#0d0e15"), surface: v("--surface-solid", "#181925"), border: v("--border", "#2a2c3d") };
   }
 
   function rgba(color, a) {
@@ -114,7 +114,7 @@
         ctx.fillStyle = pal.text; ctx.textAlign = "right"; ctx.font = (tick === bestBid ? "bold " : "") + "11px " + MONO;
         ctx.fillText(F.size(bid, dec), wBid - 4, y + 13);
         if (m.walls.b.has(tick)) { ctx.strokeStyle = AMBER; ctx.lineWidth = 1.5; ctx.strokeRect(1, y + 1, wBid - 2, rowH - 2); ctx.fillStyle = AMBER; ctx.font = "bold 8px sans-serif"; ctx.textAlign = "left"; ctx.fillText("WALL", 3, y + 12); }
-        if (m.tracker.isFlagged("b", tick)) { ctx.strokeStyle = rgba("#f472b6", 0.4 + 0.6 * pulse); ctx.lineWidth = 2; ctx.strokeRect(1, y + 1, wBid - 2, rowH - 2); ctx.fillStyle = "#f472b6"; ctx.font = "bold 8px sans-serif"; ctx.textAlign = "left"; ctx.fillText("ICE", 3, y + 12); }
+        if (m.tracker.isFlagged("b", tick)) { ctx.strokeStyle = rgba("#00c8ff", 0.4 + 0.6 * pulse); ctx.lineWidth = 2; ctx.strokeRect(1, y + 1, wBid - 2, rowH - 2); ctx.fillStyle = "#00c8ff"; ctx.font = "bold 8px sans-serif"; ctx.textAlign = "left"; ctx.fillText("ICE", 3, y + 12); }
       }
       if (ask) {
         ctx.fillStyle = rgba(pal.bear, 0.38);
@@ -122,7 +122,7 @@
         ctx.fillStyle = pal.text; ctx.textAlign = "left"; ctx.font = (tick === bestAsk ? "bold " : "") + "11px " + MONO;
         ctx.fillText(F.size(ask, dec), xAsk + 5, y + 13);
         if (m.walls.a.has(tick)) { ctx.strokeStyle = AMBER; ctx.lineWidth = 1.5; ctx.strokeRect(xAsk + 1, y + 1, wAsk - 2, rowH - 2); ctx.fillStyle = AMBER; ctx.font = "bold 8px sans-serif"; ctx.textAlign = "right"; ctx.fillText("WALL", xAsk + wAsk - 3, y + 12); }
-        if (m.tracker.isFlagged("a", tick)) { ctx.strokeStyle = rgba("#f472b6", 0.4 + 0.6 * pulse); ctx.lineWidth = 2; ctx.strokeRect(xAsk + 1, y + 1, wAsk - 2, rowH - 2); ctx.fillStyle = "#f472b6"; ctx.font = "bold 8px sans-serif"; ctx.textAlign = "right"; ctx.fillText("ICE", xAsk + wAsk - 3, y + 12); }
+        if (m.tracker.isFlagged("a", tick)) { ctx.strokeStyle = rgba("#00c8ff", 0.4 + 0.6 * pulse); ctx.lineWidth = 2; ctx.strokeRect(xAsk + 1, y + 1, wAsk - 2, rowH - 2); ctx.fillStyle = "#00c8ff"; ctx.font = "bold 8px sans-serif"; ctx.textAlign = "right"; ctx.fillText("ICE", xAsk + wAsk - 3, y + 12); }
       }
 
       if (isLast) {
