@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="globe/globe.css">
 <link rel="stylesheet" href="futures/futures.css">
 <link rel="stylesheet" href="bias/bias.css">
+<link rel="stylesheet" href="ix/ix.css">
 <style>
   /* ============ Tokens ============ */
   :root {
@@ -644,7 +645,11 @@
     </button>
 
     <nav class="primary-nav" id="primaryNav">
-      <button class="nav-item active" data-view="futures" type="button">
+      <button class="nav-item active" data-view="ix" type="button">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 2 5-7"/></svg>
+        <span class="nav-label">Index Workstation</span>
+      </button>
+      <button class="nav-item" data-view="futures" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3v18M17 3v18" stroke-linecap="round"/><rect x="4.5" y="7" width="5" height="8" rx="1"/><rect x="14.5" y="5" width="5" height="10" rx="1"/></svg>
         <span class="nav-label">Futures Desk</span>
       </button>
@@ -725,7 +730,7 @@
       <button class="icon-btn" id="mobileNavBtn" type="button" style="display:none;">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
-      <div class="breadcrumb">Index Watch / <b id="breadcrumbCurrent">Futures Desk</b></div>
+      <div class="breadcrumb">Index Watch / <b id="breadcrumbCurrent">Index Workstation</b></div>
       <div class="search-wrap">
         <svg class="search-ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         <input class="search-input" id="globalSearch" type="text" placeholder="Search stories, symbols, sources…">
@@ -746,7 +751,122 @@
     <main class="content">
 
       <!-- ============ FUTURES DESK (ES / MES / NQ / MNQ) ============ -->
-      <section class="view active fd" data-view="futures" id="fdRoot">
+      <!-- ============ INDEX WORKSTATION (ES / NQ) ============ -->
+      <section class="view active" data-view="ix">
+        <div class="ix risk-open" id="ixRoot">
+          <header class="ix-head">
+            <div class="ix-title">
+              <h1 id="ixTitle">Index Workstation</h1>
+              <div class="ix-price"><span class="num" id="ixQuote"></span><span class="num" id="ixChange"></span></div>
+            </div>
+            <div class="ix-controls">
+              <div class="ix-seg" id="ixContract" role="group" aria-label="Contract"></div>
+              <div class="ix-seg" id="ixSource" role="group" aria-label="Data source"></div>
+              <div class="ix-group" id="ixSpeedWrap"><span class="ix-label">Speed</span><div class="ix-seg" id="ixSpeed" role="group" aria-label="Simulation speed"></div></div>
+              <span class="ix-badge sim" id="ixBadge" role="status">SIM</span>
+              <span class="num ix-clock" id="ixClock"></span>
+            </div>
+            <p class="ix-statustext" id="ixStatusText"></p>
+          </header>
+
+          <div class="ix-cal" id="ixCal" aria-label="High-impact release countdown">
+            <span class="ix-cal-tag">HIGH IMPACT &middot; ES / NQ</span>
+            <div class="ix-cal-main"><b id="ixCalName"></b><span id="ixCalWhen"></span></div>
+            <span class="ix-cd num" id="ixCalCd"></span>
+            <span class="ix-hvw" id="ixHvw" hidden>&#9888; HIGH VOLATILITY WARNING</span>
+            <span class="ix-cal-next" id="ixCalNext"></span>
+          </div>
+
+          <div class="ix-strips">
+            <section class="ix-panel" aria-label="Performance by horizon">
+              <div class="ix-ph"><span>Performance</span><small id="ixPerfNote"></small></div>
+              <div class="ix-scroll"><table class="ix-tbl"><thead><tr><th>Index</th><th>Last</th><th>Day</th><th>Month</th><th>Quarter</th><th>Year</th></tr></thead><tbody id="ixPerf"></tbody></table></div>
+            </section>
+            <section class="ix-panel" aria-label="Monthly seasonality">
+              <div class="ix-ph"><span id="ixSeasonTitle">Monthly seasonality</span><span class="ix-ph-actions"><button type="button" class="ix-btn" id="ixSeasonLoad">Load CSV</button><button type="button" class="ix-btn" id="ixSeasonClear" hidden>Clear</button><input type="file" id="ixSeasonFile" accept=".csv,text/csv" hidden></span></div>
+              <div class="ix-season" id="ixSeason"></div>
+              <p class="ix-note ix-pad" id="ixSeasonNote"></p>
+            </section>
+          </div>
+
+          <div class="ix-grid">
+            <div class="ix-main">
+              <section class="ix-panel" aria-label="Price chart">
+                <div class="ix-chartbar">
+                  <div class="ix-seg" id="ixTf" role="group" aria-label="Bar interval"></div>
+                  <div class="ix-group"><span class="ix-label">Opening range</span><div class="ix-seg" id="ixOrMin" role="group" aria-label="Opening range minutes"></div></div>
+                  <span class="ix-hint">drag to pan &middot; wheel to zoom &middot; double-click to reset</span>
+                </div>
+                <div class="ix-toggles" id="ixToggles"></div>
+                <div class="ix-cv ix-cv-main"><canvas id="ixChart" aria-label="Price chart with volume profiles, session levels, initial balance and opening range"></canvas></div>
+                <div class="ix-cv ix-cv-cvd"><canvas id="ixCvd" aria-label="Cumulative volume delta"></canvas></div>
+              </section>
+            </div>
+
+            <aside class="ix-side ix-panel" aria-label="Supporting panes">
+              <div class="ix-tabs ix-seg" id="ixTabs" role="tablist"></div>
+
+              <div class="ix-pane" id="ixPane-breadth">
+                <table class="ix-tbl ix-breadth"><thead><tr><th>Stock</th><th>Day</th><th title="Weight in the S&amp;P 500, percent">ES wt</th><th title="Weight in the Nasdaq-100, percent">NQ wt</th><th>ES impact</th><th>NQ impact</th></tr></thead><tbody id="ixBreadthRows"></tbody></table>
+                <div class="ix-kv ix-pad"><span>Top 7 impact on ES</span><b class="num" id="ixImpact-es"></b></div>
+                <div class="ix-kv ix-pad"><span>Top 7 impact on NQ</span><b class="num" id="ixImpact-nq"></b></div>
+                <p class="ix-note ix-pad">Impact is the stock's change times its index weight. Weights are approximate and drift daily; edit them to match your source.</p>
+              </div>
+
+              <div class="ix-pane" id="ixPane-ratio" hidden>
+                <div class="ix-ratio ix-pad"><span class="num ix-ratio-val" id="ixRatioVal"></span><span class="num" id="ixRatioChg"></span></div>
+                <p class="ix-pad ix-lead" id="ixRatioLead"></p>
+                <div class="ix-cv ix-cv-mini"><canvas id="ixRatioChart" aria-label="NQ to ES price ratio this session"></canvas></div>
+                <div class="ix-cv ix-cv-mini"><canvas id="ixRelChart" aria-label="NQ and ES percent change this session"></canvas></div>
+              </div>
+
+              <div class="ix-pane" id="ixPane-levels" hidden>
+                <table class="ix-tbl"><thead><tr><th>Level</th><th>Price</th><th>From last</th></tr></thead><tbody id="ixLevelRows"></tbody></table>
+                <p class="ix-note ix-pad" id="ixIbNote"></p>
+                <h4 class="ix-sub ix-pad">Opening range matrix</h4>
+                <table class="ix-tbl"><thead><tr><th>Window</th><th>High</th><th>Low</th><th>Range</th><th>Status</th></tr></thead><tbody id="ixOrRows"></tbody></table>
+              </div>
+
+              <div class="ix-pane" id="ixPane-news" hidden>
+                <div class="ix-pad"><div class="ix-seg" id="ixNewsFilter" role="group" aria-label="Filter headlines"></div></div>
+                <div id="ixNews"></div>
+              </div>
+
+              <div class="ix-pane" id="ixPane-scen" hidden>
+                <div class="ix-pad"><select id="ixScenSel" aria-label="Upcoming release"></select><p class="ix-note" id="ixScenWhen"></p></div>
+                <div id="ixScenRows"></div>
+                <p class="ix-note ix-pad">Playbook notes are generic tendencies to plan around, not forecasts. Your plan notes are saved in this browser.</p>
+              </div>
+            </aside>
+
+            <aside class="ix-risk ix-panel" aria-label="Futures risk calculator">
+              <div class="ix-ph"><span class="ix-risk-title">Risk and prop-firm guard</span><button type="button" class="ix-btn" id="ixRiskToggle" aria-expanded="true">&raquo;</button></div>
+              <div class="ix-risk-body">
+                <p class="ix-note ix-pad" id="ixSpec"></p>
+                <div class="ix-maxbox"><span class="ix-label">Maximum safe size</span><span class="ix-max num" id="ixMax">0</span><span class="ix-maxsub" id="ixMaxSub"></span></div>
+                <p class="ix-warn" id="ixRiskWarn" role="alert" hidden></p>
+                <div class="ix-allsizes" id="ixAll" aria-label="Maximum size for each contract"></div>
+                <div class="ix-fields">
+                  <label class="wide">Stop distance<span class="ix-stoprow"><input type="number" id="ixStop" data-risk="stop" min="0" step="0.25"><select id="ixStopUnit" aria-label="Stop unit"><option value="ticks">ticks</option><option value="points">points</option></select></span></label>
+                  <label>Slippage (ticks)<input type="number" data-risk="slippageTicks" min="0" step="1"></label>
+                  <label>Fees per contract ($)<input type="number" data-risk="commission" min="0" step="0.1"></label>
+                  <label>Account size ($)<input type="number" data-risk="account" min="0" step="1000"></label>
+                  <label>Daily loss limit ($)<input type="number" data-risk="dailyLimit" min="0" step="50"></label>
+                  <label>Trailing drawdown ($)<input type="number" data-risk="trailing" min="0" step="50"></label>
+                  <label>Today's P&amp;L ($)<input type="number" data-risk="dayPnl" step="50"></label>
+                  <label>Current balance ($)<input type="number" data-risk="balance" min="0" step="50"></label>
+                  <label>Peak balance ($)<input type="number" data-risk="peak" min="0" step="50"></label>
+                  <label class="wide">Risk cap per trade (% of account, optional)<input type="number" data-risk="riskPct" min="0" step="0.1"></label>
+                </div>
+                <div class="ix-riskout" id="ixRiskOut"></div>
+                <p class="ix-note ix-pad">Assumes one trade, stopped out with the slippage above. Gaps can exceed a stop. Prop firms define drawdown differently, so check your firm's rules.</p>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="view fd" data-view="futures" id="fdRoot">
         <div class="fd-head">
           <div class="fd-title">
             <h1>Futures Desk</h1>
@@ -1861,7 +1981,7 @@
   var navItems = document.querySelectorAll(".nav-item");
   var views = document.querySelectorAll(".view");
   var breadcrumbEl = document.getElementById("breadcrumbCurrent");
-  var VIEW_LABELS = { futures: "Futures Desk", overview: "Overview", tradedesk: "Trade Desk", terminal: "Trading Terminal", orderflow: "Order Flow", feed: "Story Feed", macro: "Macro & Benchmarks", fundamentals: "Fundamentals & Valuation", sentiment: "Sentiment Engine", technical: "Technical & Flow", map: "Event Map", symbols: "Symbols Tracked", sources: "Sources & Coverage", schedule: "Refresh Schedule" };
+  var VIEW_LABELS = { ix: "Index Workstation", futures: "Futures Desk", overview: "Overview", tradedesk: "Trade Desk", terminal: "Trading Terminal", orderflow: "Order Flow", feed: "Story Feed", macro: "Macro & Benchmarks", fundamentals: "Fundamentals & Valuation", sentiment: "Sentiment Engine", technical: "Technical & Flow", map: "Event Map", symbols: "Symbols Tracked", sources: "Sources & Coverage", schedule: "Refresh Schedule" };
 
   function setView(name) {
     navItems.forEach(function (n) { n.classList.toggle("active", n.getAttribute("data-view") === name); });
@@ -2935,6 +3055,10 @@
 <script src="futures/ui.js"></script>
 <script src="bias/bias.js"></script>
 <script src="bias/live.js"></script>
+<script src="ix/core.js"></script>
+<script src="ix/data.js"></script>
+<script src="ix/chart.js"></script>
+<script src="ix/ui.js"></script>
 <script src="globe/data.js"></script>
 <script src="globe/scene.js"></script>
 <script src="globe/infra.js"></script>

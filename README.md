@@ -42,6 +42,31 @@ On top of the globe there is a decision-support layer. Read the data-source note
 | Import | Drag a GeoJSON, KML, KMZ or CZML file onto the globe (20 MB limit) | Runs locally in your browser. |
 | Share / export | Copy a link that restores camera, layers, basemap, timeline position and selection; export a PNG snapshot or a JSON briefing | Links are validated and range-checked when opened. |
 
+## Index Workstation (ES / MES / NQ / MNQ)
+
+The landing view: an analysis workstation limited to S&P 500 and Nasdaq-100 futures. It deliberately contains no macro briefings, rates, cross-asset benchmarks, fundamentals, positioning or risk-regime gauges. The other views in the app are unchanged.
+
+| Module | What it does |
+|---|---|
+| Chart | 1m / 5m / 15m candles. Toggles for RTH and overnight volume profiles (VAH, VAL, POC), Initial Balance with 1.5x and 2.0x targets, PDH / PDL / PDC, ONH / ONL, RTH open, and a 5 / 15 / 30 minute opening-range box with plus and minus 1R projections. |
+| CVD pane | Session cumulative volume delta aligned with the chart, with price-versus-CVD divergences marked on both. |
+| Release countdown | High-impact scheduled releases only, with a High Volatility Warning inside 15 minutes. |
+| Performance and seasonality | Last, Day, Month, Quarter and Year % with arrows. Seasonality is computed only from a CSV you load (Date and Close columns, at least two years; ten or more is better). No figures are built in. |
+| Breadth | AAPL, MSFT, NVDA, AMZN, META, GOOGL, TSLA with intraday change and estimated ES and NQ impact. Index weights are approximate and editable. |
+| NQ / ES | Price ratio and relative performance this session. |
+| Levels | All levels with distance from last, plus the opening-range matrix. |
+| Headlines | ES and NQ headlines with the 5-minute point reaction and a mini chart from 10 minutes before to 30 after. Headlines about excluded markets are filtered out. |
+| Scenario desk | Above / In Line / Below rows per upcoming release, with generic playbook notes and your own saved plan. |
+| Risk panel | Collapsible. CME specs (ES $50 per point, MES $5, NQ $20, MNQ $2; tick 0.25), stop in ticks or points, slippage and fees, daily loss limit and trailing drawdown. The maximum size keeps one stop-out strictly inside every limit. Blank fields are treated as missing, never as zero. |
+
+### Data sources
+
+- **Simulator (default):** correlated ES and NQ overnight and regular sessions on a simulated clock (1x, 10x, 60x). Its headlines are marked `SIM SAMPLE` and are not news.
+- **Live proxy:** real SPY and QQQ perpetual candles from Binance stand in for ES and NQ, so **levels are ETF prices, not futures prices**. Delta uses the exchange's taker-buy volume. Volume profiles are estimated from 1-minute candles. Mega-caps use their Binance perpetuals. Headlines are investingLive via rss2json. Candles outside CME hours are excluded. These perpetuals listed in 2026, so Year % is unavailable.
+- US market holidays and 1:00 PM early closes for 2026 and 2027 are listed in `ix/core.js` (`IX.HOLIDAYS`, `IX.EARLY_CLOSE`). Verify them and extend each year. Release dates marked approximate should be checked against the official calendars.
+
+The risk panel assumes a single trade. Gaps can exceed a stop, and prop firms define drawdown differently.
+
 ## Story Feed: Globe / Bias card
 
 The top of the Story Feed has a live card: trading-session clock, a headline carousel and a **Daily Bias** list for NQ, ES, GC and EURUSD. Tap a row for the full read.
@@ -172,6 +197,10 @@ futures/engine.js       Futures Desk: contracts, footprint bars, imbalance and b
 futures/feed.js         Futures Desk: simulator, relay WebSocket connector, honest status
 futures/render.js       Futures Desk canvases: footprint, CVD, DOM, profile
 futures/ui.js           Futures Desk controls, tape, alerts, stats, settings
+ix/core.js              Workstation logic: sessions, levels, profiles, risk, reactions
+ix/data.js              Workstation simulator and live SPY / QQQ proxy
+ix/chart.js             Workstation canvases
+ix/ui.js                Workstation panes, toggles, calculator
 bias/bias.js            Globe / Bias: scoring, sessions, headline parsing
 bias/live.js            Globe / Bias: live polling and the card UI
 globe/data.js           event feed normalisers, geo helpers, market sessions, reference layers
